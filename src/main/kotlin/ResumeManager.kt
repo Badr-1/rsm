@@ -16,6 +16,7 @@ class ResumeManager {
     private val configFile = File(".resume-config.json")
     private val resumeFile = File("resume.tex")
     private val jakeTemplateUrl = "https://raw.githubusercontent.com/jakegut/resume/master/resume.tex"
+    private val json = Json { prettyPrint = true }
 
     fun initializeResume() {
         println("🚀 Initializing resume repository...")
@@ -278,11 +279,18 @@ class ResumeManager {
     private fun collectTechnicalSkills(): TechnicalSkills {
         println("\n🔧 Technical Skills:")
 
-        val languages = readLine("Languages (comma-separated): ")?.split(",")?.map { it.trim() }?.filter { it.isNotEmpty() } ?: emptyList()
-        val frameworks = readLine("Frameworks (comma-separated): ")?.split(",")?.map { it.trim() }?.filter { it.isNotEmpty() } ?: emptyList()
+        val languages =
+            readLine("Languages (comma-separated): ")?.split(",")?.map { it.trim() }?.filter { it.isNotEmpty() }
+                ?: emptyList()
+        val frameworks =
+            readLine("Frameworks (comma-separated): ")?.split(",")?.map { it.trim() }?.filter { it.isNotEmpty() }
+                ?: emptyList()
         val developerTools =
-            readLine("Developer Tools (comma-separated): ")?.split(",")?.map { it.trim() }?.filter { it.isNotEmpty() } ?: emptyList()
-        val libraries = readLine("Libraries (comma-separated): ")?.split(",")?.map { it.trim() }?.filter { it.isNotEmpty() } ?: emptyList()
+            readLine("Developer Tools (comma-separated): ")?.split(",")?.map { it.trim() }?.filter { it.isNotEmpty() }
+                ?: emptyList()
+        val libraries =
+            readLine("Libraries (comma-separated): ")?.split(",")?.map { it.trim() }?.filter { it.isNotEmpty() }
+                ?: emptyList()
 
         return TechnicalSkills(languages, frameworks, developerTools, libraries)
     }
@@ -293,8 +301,9 @@ class ResumeManager {
         println("📄 Generated resume.tex")
     }
 
+
     private fun saveConfig(data: ResumeData) {
-        val json = Json.encodeToString(data)
+        val json = json.encodeToString(data)
         configFile.writeText(json)
     }
 
