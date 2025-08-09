@@ -7,15 +7,12 @@ import models.Project
 import models.ResumeData
 import models.TechnicalSkills
 import java.io.File
-import java.net.URL
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
-import utils.FileUtils
 
 class ResumeManager {
     private val configFile = File(".resume-config.json")
     private val resumeFile = File("resume.tex")
-    private val jakeTemplateUrl = "https://raw.githubusercontent.com/jakegut/resume/master/resume.tex"
     private val json = Json { prettyPrint = true }
 
     fun initializeResume() {
@@ -23,9 +20,6 @@ class ResumeManager {
 
         // Initialize git repository
         val git = Git.init().setDirectory(File(".")).call()
-
-        // Download Jake's template
-        downloadTemplate()
 
         var resumeData = loadConfig()
 
@@ -148,15 +142,6 @@ class ResumeManager {
 
             else -> println("❌ Unknown section: $section")
         }
-    }
-
-    private fun downloadTemplate() {
-        val templateContent = URL(jakeTemplateUrl).readText()
-        resumeFile.writeText(templateContent)
-        if (FileUtils.downloadFile(jakeTemplateUrl, resumeFile))
-            println("📥 Downloaded Jake's resume template")
-        else
-            println("❌ Failed to download Jake's resume template")
     }
 
     private fun collectPersonalInfo(): PersonalInfo {
