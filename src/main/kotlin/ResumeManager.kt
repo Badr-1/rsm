@@ -175,7 +175,6 @@ class ResumeManager {
 
             educationList.add(
                 Education(
-                    id = generateId(),
                     institution = institution,
                     degree = degree,
                     location = location,
@@ -211,7 +210,6 @@ class ResumeManager {
 
             experienceList.add(
                 Experience(
-                    id = generateId(),
                     company = company,
                     position = position,
                     location = location,
@@ -246,7 +244,6 @@ class ResumeManager {
 
             projectsList.add(
                 Project(
-                    id = generateId(),
                     name = name,
                     technologies = technologies,
                     startDate = startDate,
@@ -321,10 +318,6 @@ class ResumeManager {
 
     private fun getCurrentBranch(git: Git): String {
         return git.repository.branch
-    }
-
-    private fun generateId(): String {
-        return System.currentTimeMillis().toString()
     }
 
     private fun readLine(prompt: String, default: String = ""): String {

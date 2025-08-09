@@ -13,7 +13,6 @@ data class PersonalInfo(
 
 @Serializable
 data class Education(
-    val id: String = "",
     val institution: String = "",
     val degree: String = "",
     val location: String = "",
@@ -24,7 +23,6 @@ data class Education(
 
 @Serializable
 data class Experience(
-    val id: String = "",
     val company: String = "",
     val position: String = "",
     val location: String = "",
@@ -35,7 +33,6 @@ data class Experience(
 
 @Serializable
 data class Project(
-    val id: String = "",
     val name: String = "",
     val technologies: String = "",
     val startDate: String = "",
