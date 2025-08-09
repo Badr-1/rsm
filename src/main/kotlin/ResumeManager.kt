@@ -1,5 +1,6 @@
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.encodeToString
+import models.Certification
 import models.Education
 import models.Experience
 import models.PersonalInfo
@@ -30,13 +31,15 @@ class ResumeManager {
             val experience = collectExperience()
             val projects = collectProjects()
             val skills = collectTechnicalSkills()
+            val certifications = collectCertifications()
 
             resumeData = ResumeData(
                 personalInfo = personalInfo,
                 education = education,
                 experience = experience,
                 projects = projects,
-                technicalSkills = skills
+                technicalSkills = skills,
+                certifications = certifications
             )
             // Save configuration
             saveConfig(resumeData)
@@ -271,6 +274,31 @@ class ResumeManager {
             readLine("Libraries (comma-separated): ").split(",").map { it.trim().escapeLatexSpecialChars() }.filter { it.isNotEmpty() }
 
         return TechnicalSkills(languages, frameworks, developerTools, libraries)
+    }
+
+    private fun collectCertifications(): List<Certification> {
+        println("\n🏆 Certifications:")
+        val certificationsList = mutableListOf<Certification>()
+
+        do {
+            val name = readLine("Certification Name: ").escapeLatexSpecialChars()
+            val issuingOrganization = readLine("Issuing Organization: ").escapeLatexSpecialChars()
+            val issueDate = readLine("Issue Date: ").escapeLatexSpecialChars()
+            val expirationDate = readLine("Expiration Date (optional): ").escapeLatexSpecialChars()
+
+            certificationsList.add(
+                Certification(
+                    name = name,
+                    issuingOrganization = issuingOrganization,
+                    issueDate = issueDate,
+                    expirationDate = expirationDate
+                )
+            )
+
+            val addMore = readLine("Add another certification? (y/n): ")
+        } while (addMore.lowercase() == "y")
+
+        return certificationsList
     }
 
     private fun generateLatexFile(data: ResumeData) {

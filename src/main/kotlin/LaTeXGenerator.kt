@@ -1,3 +1,4 @@
+import models.Certification
 import models.Education
 import models.Experience
 import models.PersonalInfo
@@ -17,6 +18,7 @@ class LaTeXGenerator {
             appendLine(generateExperience(data.experience))
             appendLine(generateProjects(data.projects))
             appendLine(generateTechnicalSkills(data.technicalSkills))
+            appendLine(generateCertifications(data.certifications))
             appendLine(generateFooter())
         }
     }
@@ -253,6 +255,32 @@ class LaTeXGenerator {
             appendLine("     ${skillCategories.joinToString(" \\\\\n     ")}")
             appendLine("    }}")
             appendLine(" \\end{itemize}")
+        }
+    }
+
+    private fun generateCertifications(certifications: List<Certification>): String {
+        if (certifications.isEmpty()) return ""
+
+        return buildString {
+            appendLine("%-----------CERTIFICATIONS-----------")
+            appendLine("\\section{Certifications}")
+            val groupByOrg = certifications.groupBy { it.issuingOrganization }
+            appendLine("  \\resumeSubHeadingListStart")
+            groupByOrg.forEach { (org, certs) ->
+                if (certs.size == 1)
+                    appendLine("\\resumeProjectHeading{\\textbf{$org} ${certs[0].name}}{${certs[0].issueDate} -- ${certs[0].expirationDate}}")
+                else{
+                    appendLine("\\resumeProjectHeading{\\textbf{$org}")
+                    appendLine("\\resumeItemListStart")
+                    certs.forEach { cert ->
+                        appendLine("\\resumeItem{${cert.name} (${cert.issueDate} -- ${cert.expirationDate})}")
+                    }
+                    appendLine("\\resumeItemListEnd")
+                }
+            }
+
+
+            appendLine("  \\resumeSubHeadingListEnd")
         }
     }
 

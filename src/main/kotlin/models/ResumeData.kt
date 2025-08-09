@@ -49,10 +49,20 @@ data class TechnicalSkills(
 )
 
 @Serializable
+data class Certification(
+    val name: String = "",
+    val issuingOrganization: String = "",
+    val issueDate: String = "",
+    val expirationDate: String = "",
+)
+
+
+@Serializable
 data class ResumeData(
     val personalInfo: PersonalInfo = PersonalInfo(),
     val education: List<Education> = emptyList(),
     val experience: List<Experience> = emptyList(),
     val projects: List<Project> = emptyList(),
-    val technicalSkills: TechnicalSkills = TechnicalSkills()
+    val technicalSkills: TechnicalSkills = TechnicalSkills(),
+    val certifications: List<Certification> = emptyList()
 )
