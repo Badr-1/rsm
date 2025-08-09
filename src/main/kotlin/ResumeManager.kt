@@ -119,9 +119,9 @@ class ResumeManager {
             "education" -> {
                 displayEducationList(resumeData.education)
                 val index = readLine("Enter the number of education entry to remove: ").toIntOrNull()
-                if (index != null && index > 0 && index <= resumeData.education.size) {
+                if (index != null && index in resumeData.education.indices) {
                     val updated = resumeData.education.toMutableList()
-                    updated.removeAt(index - 1)
+                    updated.removeAt(index)
                     saveAndCommit(resumeData.copy(education = updated), git, "Remove education from $targetBranch")
                 }
             }
@@ -129,9 +129,9 @@ class ResumeManager {
             "experience" -> {
                 displayExperienceList(resumeData.experience)
                 val index = readLine("Enter the number of experience entry to remove: ").toIntOrNull()
-                if (index != null && index > 0 && index <= resumeData.experience.size) {
+                if (index != null && index in resumeData.experience.indices) {
                     val updated = resumeData.experience.toMutableList()
-                    updated.removeAt(index - 1)
+                    updated.removeAt(index)
                     saveAndCommit(resumeData.copy(experience = updated), git, "Remove experience from $targetBranch")
                 }
             }
@@ -139,9 +139,9 @@ class ResumeManager {
             "projects" -> {
                 displayProjectsList(resumeData.projects)
                 val index = readLine("Enter the number of project to remove: ").toIntOrNull()
-                if (index != null && index > 0 && index <= resumeData.projects.size) {
+                if (index != null && index in resumeData.projects.indices) {
                     val updated = resumeData.projects.toMutableList()
-                    updated.removeAt(index - 1)
+                    updated.removeAt(index)
                     saveAndCommit(resumeData.copy(projects = updated), git, "Remove project from $targetBranch")
                 }
             }
@@ -351,21 +351,21 @@ class ResumeManager {
     private fun displayEducationList(education: List<Education>) {
         println("\n🎓 Education:")
         education.forEachIndexed { index, edu ->
-            println("${index + 1}. ${edu.degree} at ${edu.institution}")
+            println("${index}. ${edu.degree} at ${edu.institution}")
         }
     }
 
     private fun displayExperienceList(experience: List<Experience>) {
         println("\n💼 Experience:")
         experience.forEachIndexed { index, exp ->
-            println("${index + 1}. ${exp.position} at ${exp.company}")
+            println("${index}. ${exp.position} at ${exp.company}")
         }
     }
 
     private fun displayProjectsList(projects: List<Project>) {
         println("\n🚀 Projects:")
         projects.forEachIndexed { index, project ->
-            println("${index + 1}. ${project.name}")
+            println("${index}. ${project.name}")
         }
     }
 
