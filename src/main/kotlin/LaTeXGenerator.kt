@@ -190,7 +190,7 @@ class LaTeXGenerator {
                 if (exp.bullets.isNotEmpty()) {
                     appendLine("      \\resumeItemListStart")
                     exp.bullets.forEach { bullet ->
-                        appendLine("        \\resumeItem{${bullet.escapeLatexSpecialChars()}}")
+                        appendLine("        \\resumeItem{${bullet}}")
                     }
                     appendLine("      \\resumeItemListEnd")
                 }
@@ -210,12 +210,12 @@ class LaTeXGenerator {
 
             projects.forEach { project ->
                 appendLine("      \\resumeProjectHeading")
-                appendLine("          {\\textbf{${project.name}} $|$ \\emph{${project.technologies.escapeLatexSpecialChars()}}}{${project.startDate} -- ${project.endDate}}")
+                appendLine("          {\\textbf{${project.name}} $|$ \\emph{${project.technologies}}}{${project.startDate} -- ${project.endDate}}")
 
                 if (project.bullets.isNotEmpty()) {
                     appendLine("          \\resumeItemListStart")
                     project.bullets.forEach { bullet ->
-                        appendLine("            \\resumeItem{${bullet.escapeLatexSpecialChars()}}")
+                        appendLine("            \\resumeItem{${bullet}}")
                     }
                     appendLine("          \\resumeItemListEnd")
                 }
@@ -235,19 +235,19 @@ class LaTeXGenerator {
             val skillCategories = mutableListOf<String>()
 
             if (skills.languages.isNotEmpty()) {
-                skillCategories.add("\\textbf{Languages}{: ${skills.languages.joinToString(", ").escapeLatexSpecialChars()}}")
+                skillCategories.add("\\textbf{Languages}{: ${skills.languages.joinToString(", ")}}")
             }
 
             if (skills.frameworks.isNotEmpty()) {
-                skillCategories.add("\\textbf{Frameworks}{: ${skills.frameworks.joinToString(", ").escapeLatexSpecialChars()}}")
+                skillCategories.add("\\textbf{Frameworks}{: ${skills.frameworks.joinToString(", ")}}")
             }
 
             if (skills.developerTools.isNotEmpty()) {
-                skillCategories.add("\\textbf{Developer Tools}{: ${skills.developerTools.joinToString(", ").escapeLatexSpecialChars()}}")
+                skillCategories.add("\\textbf{Developer Tools}{: ${skills.developerTools.joinToString(", ")}}")
             }
 
             if (skills.libraries.isNotEmpty()) {
-                skillCategories.add("\\textbf{Libraries}{: ${skills.libraries.joinToString(", ").escapeLatexSpecialChars()}}")
+                skillCategories.add("\\textbf{Libraries}{: ${skills.libraries.joinToString(", ")}}")
             }
 
             appendLine("     ${skillCategories.joinToString(" \\\\\n     ")}")
@@ -274,21 +274,5 @@ class LaTeXGenerator {
         }
     }
 
-    private fun String.escapeLatexSpecialChars(): String {
-        return this.replace("""[&%$#_{}~^\\]""".toRegex()) { matchResult ->
-            when (val match = matchResult.value) {
-                "&" -> "\\&"
-                "%" -> "\\%"
-                "$" -> "\\$"
-                "#" -> "\\#"
-                "_" -> "\\_"
-                "{" -> "\\{"
-                "}" -> "\\}"
-                "~" -> "\\textasciitilde{}"
-                "^" -> "\\textasciicircum{}"
-                "\\" -> "\\textbackslash{}"
-                else -> match
-            }
-        }
-    }
+
 }

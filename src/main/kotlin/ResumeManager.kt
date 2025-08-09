@@ -118,7 +118,7 @@ class ResumeManager {
         when (section.lowercase()) {
             "education" -> {
                 displayEducationList(resumeData.education)
-                val index = readLine("Enter the number of education entry to remove: ")?.toIntOrNull()
+                val index = readLine("Enter the number of education entry to remove: ").toIntOrNull()
                 if (index != null && index > 0 && index <= resumeData.education.size) {
                     val updated = resumeData.education.toMutableList()
                     updated.removeAt(index - 1)
@@ -128,7 +128,7 @@ class ResumeManager {
 
             "experience" -> {
                 displayExperienceList(resumeData.experience)
-                val index = readLine("Enter the number of experience entry to remove: ")?.toIntOrNull()
+                val index = readLine("Enter the number of experience entry to remove: ").toIntOrNull()
                 if (index != null && index > 0 && index <= resumeData.experience.size) {
                     val updated = resumeData.experience.toMutableList()
                     updated.removeAt(index - 1)
@@ -138,7 +138,7 @@ class ResumeManager {
 
             "projects" -> {
                 displayProjectsList(resumeData.projects)
-                val index = readLine("Enter the number of project to remove: ")?.toIntOrNull()
+                val index = readLine("Enter the number of project to remove: ").toIntOrNull()
                 if (index != null && index > 0 && index <= resumeData.projects.size) {
                     val updated = resumeData.projects.toMutableList()
                     updated.removeAt(index - 1)
@@ -161,11 +161,11 @@ class ResumeManager {
 
     private fun collectPersonalInfo(): PersonalInfo {
         println("\n👤 Personal Information:")
-        val name = readLine("Full Name: ") ?: ""
-        val phone = readLine("Phone Number: ") ?: ""
-        val email = readLine("Email: ") ?: ""
-        val linkedin = readLine("LinkedIn URL: ") ?: ""
-        val github = readLine("GitHub URL: ") ?: ""
+        val name = readLine("Full Name: ").escapeLatexSpecialChars()
+        val phone = readLine("Phone Number: ").escapeLatexSpecialChars()
+        val email = readLine("Email: ").escapeLatexSpecialChars()
+        val linkedin = readLine("LinkedIn URL: ").escapeLatexSpecialChars()
+        val github = readLine("GitHub URL: ").escapeLatexSpecialChars()
 
         return PersonalInfo(name, phone, email, linkedin, github)
     }
@@ -175,18 +175,18 @@ class ResumeManager {
         val educationList = mutableListOf<Education>()
 
         do {
-            val institution = readLine("Institution: ") ?: ""
-            val degree = readLine("Degree: ") ?: ""
-            val location = readLine("Location: ") ?: ""
-            val graduationDate = readLine("Graduation Date: ") ?: ""
-            val gpa = readLine("GPA (optional): ") ?: ""
+            val institution = readLine("Institution: ").escapeLatexSpecialChars()
+            val degree = readLine("Degree: ").escapeLatexSpecialChars()
+            val location = readLine("Location: ").escapeLatexSpecialChars()
+            val graduationDate = readLine("Graduation Date: ").escapeLatexSpecialChars()
+            val gpa = readLine("GPA (optional): ").escapeLatexSpecialChars()
 
             println("Relevant Courses (press Enter on empty line to finish):")
             val courses = mutableListOf<String>()
             do {
-                val course = readLine("Course: ")
-                if (!course.isNullOrBlank()) courses.add(course)
-            } while (!course.isNullOrBlank())
+                val course = readLine("Course: ").escapeLatexSpecialChars()
+                if (course.isNotBlank()) courses.add(course)
+            } while (course.isNotBlank())
 
             educationList.add(
                 Education(
@@ -201,7 +201,7 @@ class ResumeManager {
             )
 
             val addMore = readLine("Add another education entry? (y/n): ")
-        } while (addMore?.lowercase() == "y")
+        } while (addMore.lowercase() == "y")
 
         return educationList
     }
@@ -211,18 +211,18 @@ class ResumeManager {
         val experienceList = mutableListOf<Experience>()
 
         do {
-            val company = readLine("Company: ") ?: ""
-            val position = readLine("Position: ") ?: ""
-            val location = readLine("Location: ") ?: ""
-            val startDate = readLine("Start Date: ") ?: ""
-            val endDate = readLine("End Date (or 'Present'): ") ?: ""
+            val company = readLine("Company: ").escapeLatexSpecialChars()
+            val position = readLine("Position: ").escapeLatexSpecialChars()
+            val location = readLine("Location: ").escapeLatexSpecialChars()
+            val startDate = readLine("Start Date: ").escapeLatexSpecialChars()
+            val endDate = readLine("End Date (or 'Present'): ").escapeLatexSpecialChars()
 
             println("Bullet Points (press Enter on empty line to finish):")
             val bullets = mutableListOf<String>()
             do {
-                val bullet = readLine("• ")
-                if (!bullet.isNullOrBlank()) bullets.add(bullet)
-            } while (!bullet.isNullOrBlank())
+                val bullet = readLine("• ").escapeLatexSpecialChars()
+                if (bullet.isNotBlank()) bullets.add(bullet)
+            } while (bullet.isNotBlank())
 
             experienceList.add(
                 Experience(
@@ -237,7 +237,7 @@ class ResumeManager {
             )
 
             val addMore = readLine("Add another experience entry? (y/n): ")
-        } while (addMore?.lowercase() == "y")
+        } while (addMore.lowercase() == "y")
 
         return experienceList
     }
@@ -247,17 +247,17 @@ class ResumeManager {
         val projectsList = mutableListOf<Project>()
 
         do {
-            val name = readLine("Project Name: ") ?: ""
-            val technologies = readLine("Technologies: ") ?: ""
-            val startDate = readLine("Start Date: ") ?: ""
-            val endDate = readLine("End Date: ") ?: ""
+            val name = readLine("Project Name: ").escapeLatexSpecialChars()
+            val technologies = readLine("Technologies: ").escapeLatexSpecialChars()
+            val startDate = readLine("Start Date: ").escapeLatexSpecialChars()
+            val endDate = readLine("End Date: ").escapeLatexSpecialChars()
 
             println("Project Details (press Enter on empty line to finish):")
             val bullets = mutableListOf<String>()
             do {
-                val bullet = readLine("• ")
-                if (!bullet.isNullOrBlank()) bullets.add(bullet)
-            } while (!bullet.isNullOrBlank())
+                val bullet = readLine("• ").escapeLatexSpecialChars()
+                if (bullet.isNotBlank()) bullets.add(bullet)
+            } while (bullet.isNotBlank())
 
             projectsList.add(
                 Project(
@@ -271,7 +271,7 @@ class ResumeManager {
             )
 
             val addMore = readLine("Add another project? (y/n): ")
-        } while (addMore?.lowercase() == "y")
+        } while (addMore.lowercase() == "y")
 
         return projectsList
     }
@@ -280,17 +280,13 @@ class ResumeManager {
         println("\n🔧 Technical Skills:")
 
         val languages =
-            readLine("Languages (comma-separated): ")?.split(",")?.map { it.trim() }?.filter { it.isNotEmpty() }
-                ?: emptyList()
+            readLine("Languages (comma-separated): ").split(",").map { it.trim().escapeLatexSpecialChars() }.filter { it.isNotEmpty() }
         val frameworks =
-            readLine("Frameworks (comma-separated): ")?.split(",")?.map { it.trim() }?.filter { it.isNotEmpty() }
-                ?: emptyList()
+            readLine("Frameworks (comma-separated): ").split(",").map { it.trim().escapeLatexSpecialChars() }.filter { it.isNotEmpty() }
         val developerTools =
-            readLine("Developer Tools (comma-separated): ")?.split(",")?.map { it.trim() }?.filter { it.isNotEmpty() }
-                ?: emptyList()
+            readLine("Developer Tools (comma-separated): ").split(",").map { it.trim().escapeLatexSpecialChars() }.filter { it.isNotEmpty() }
         val libraries =
-            readLine("Libraries (comma-separated): ")?.split(",")?.map { it.trim() }?.filter { it.isNotEmpty() }
-                ?: emptyList()
+            readLine("Libraries (comma-separated): ").split(",").map { it.trim().escapeLatexSpecialChars() }.filter { it.isNotEmpty() }
 
         return TechnicalSkills(languages, frameworks, developerTools, libraries)
     }
@@ -346,9 +342,9 @@ class ResumeManager {
         return System.currentTimeMillis().toString()
     }
 
-    private fun readLine(prompt: String): String? {
+    private fun readLine(prompt: String, default: String = ""): String {
         print(prompt)
-        return readlnOrNull()
+        return readlnOrNull() ?: default
     }
 
     // Helper methods for displaying lists and other operations...
@@ -416,5 +412,23 @@ class ResumeManager {
             developerTools = (current.developerTools + newSkills.developerTools).distinct(),
             libraries = (current.libraries + newSkills.libraries).distinct()
         )
+    }
+
+    private fun String.escapeLatexSpecialChars(): String {
+        return this.replace("""[&%$#_{}~^\\]""".toRegex()) { matchResult ->
+            when (val match = matchResult.value) {
+                "&" -> "\\&"
+                "%" -> "\\%"
+                "$" -> "\\$"
+                "#" -> "\\#"
+                "_" -> "\\_"
+                "{" -> "\\{"
+                "}" -> "\\}"
+                "~" -> "\\textasciitilde{}"
+                "^" -> "\\textasciicircum{}"
+                "\\" -> "\\textbackslash{}"
+                else -> match
+            }
+        }
     }
 }
