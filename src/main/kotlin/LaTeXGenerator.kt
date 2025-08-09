@@ -242,8 +242,8 @@ class LaTeXGenerator {
                 skillCategories.add("\\textbf{Frameworks}{: ${skills.frameworks.joinToString(", ")}}")
             }
 
-            if (skills.developerTools.isNotEmpty()) {
-                skillCategories.add("\\textbf{Developer Tools}{: ${skills.developerTools.joinToString(", ")}}")
+            if (skills.technologies.isNotEmpty()) {
+                skillCategories.add("\\textbf{Technologies}{: ${skills.technologies.joinToString(", ")}}")
             }
 
             if (skills.libraries.isNotEmpty()) {

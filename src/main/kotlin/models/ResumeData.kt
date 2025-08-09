@@ -47,7 +47,7 @@ data class Project(
 data class TechnicalSkills(
     val languages: List<String> = emptyList(),
     val frameworks: List<String> = emptyList(),
-    val developerTools: List<String> = emptyList(),
+    val technologies: List<String> = emptyList(),
     val libraries: List<String> = emptyList()
 )
 

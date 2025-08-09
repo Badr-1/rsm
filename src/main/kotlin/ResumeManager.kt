@@ -269,7 +269,7 @@ class ResumeManager {
         val frameworks =
             readLine("Frameworks (comma-separated): ").split(",").map { it.trim().escapeLatexSpecialChars() }.filter { it.isNotEmpty() }
         val developerTools =
-            readLine("Developer Tools (comma-separated): ").split(",").map { it.trim().escapeLatexSpecialChars() }.filter { it.isNotEmpty() }
+            readLine("Technologies (comma-separated): ").split(",").map { it.trim().escapeLatexSpecialChars() }.filter { it.isNotEmpty() }
         val libraries =
             readLine("Libraries (comma-separated): ").split(",").map { it.trim().escapeLatexSpecialChars() }.filter { it.isNotEmpty() }
 
@@ -298,7 +298,7 @@ class ResumeManager {
                     technicalSkills = data.technicalSkills.copy(
                         languages = data.technicalSkills.languages.filter { it.isNotBlank() },
                         frameworks = data.technicalSkills.frameworks.filter { it.isNotBlank() },
-                        developerTools = data.technicalSkills.developerTools.filter { it.isNotBlank() },
+                        technologies = data.technicalSkills.technologies.filter { it.isNotBlank() },
                         libraries = data.technicalSkills.libraries.filter { it.isNotBlank() }
                     )
                 )
@@ -358,7 +358,7 @@ class ResumeManager {
         println("\n🔧 Technical Skills:")
         println("Languages: ${skills.languages.joinToString(", ")}")
         println("Frameworks: ${skills.frameworks.joinToString(", ")}")
-        println("Developer Tools: ${skills.developerTools.joinToString(", ")}")
+        println("Technologies: ${skills.technologies.joinToString(", ")}")
         println("Libraries: ${skills.libraries.joinToString(", ")}")
     }
 
@@ -394,7 +394,7 @@ class ResumeManager {
         return TechnicalSkills(
             languages = (current.languages + newSkills.languages).distinct(),
             frameworks = (current.frameworks + newSkills.frameworks).distinct(),
-            developerTools = (current.developerTools + newSkills.developerTools).distinct(),
+            technologies = (current.technologies + newSkills.technologies).distinct(),
             libraries = (current.libraries + newSkills.libraries).distinct()
         )
     }
