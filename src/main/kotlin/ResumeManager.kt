@@ -1,3 +1,5 @@
+import com.github.kinquirer.KInquirer
+import com.github.kinquirer.components.promptConfirm
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.encodeToString
 import models.Certification
@@ -198,8 +200,8 @@ class ResumeManager {
                 )
             )
 
-            val addMore = readLine("Add another education entry? (y/n): ")
-        } while (addMore.lowercase() == "y")
+            val addMore = KInquirer.promptConfirm("Add another education entry?", default = false)
+        } while (addMore)
 
         return educationList
     }
@@ -233,8 +235,8 @@ class ResumeManager {
                 )
             )
 
-            val addMore = readLine("Add another experience entry? (y/n): ")
-        } while (addMore.lowercase() == "y")
+            val addMore = KInquirer.promptConfirm("Add another experience entry?", default = false)
+        } while (addMore)
 
         return experienceList
     }
@@ -266,8 +268,8 @@ class ResumeManager {
                 )
             )
 
-            val addMore = readLine("Add another project? (y/n): ")
-        } while (addMore.lowercase() == "y")
+            val addMore = KInquirer.promptConfirm("Add another project entry?", default = false)
+        } while (addMore)
 
         return projectsList
     }
@@ -304,8 +306,8 @@ class ResumeManager {
                 )
             )
 
-            val addMore = readLine("Add another certification? (y/n): ")
-        } while (addMore.lowercase() == "y")
+            val addMore = KInquirer.promptConfirm("Add another certification entry?", default = false)
+        } while (addMore)
 
         return certificationsList
     }

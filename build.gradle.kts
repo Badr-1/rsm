@@ -9,9 +9,13 @@ version = "1.0.0"
 
 repositories {
     mavenCentral()
+    maven { setUrl("https://jitpack.io") }
 }
 
 dependencies {
+    implementation("com.github.kotlin-inquirer:kotlin-inquirer:0.1.0")
+    implementation("org.fusesource.jansi:jansi:2.4.0")
+    implementation ("org.jline:jline:3.21.0")
     implementation("com.github.ajalt.clikt:clikt:4.2.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")
     implementation("org.eclipse.jgit:org.eclipse.jgit:7.2.1.202505142326-r")
