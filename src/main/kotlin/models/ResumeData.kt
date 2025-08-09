@@ -53,7 +53,6 @@ data class Certification(
     val name: String = "",
     val issuingOrganization: String = "",
     val issueDate: String = "",
-    val expirationDate: String = "",
 )
 
 

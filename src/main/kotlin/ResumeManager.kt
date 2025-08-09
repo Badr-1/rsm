@@ -88,6 +88,7 @@ class ResumeManager {
             "experience" -> resumeData.copy(experience = resumeData.experience + collectNewExperience())
             "projects" -> resumeData.copy(projects = resumeData.projects + collectNewProject())
             "skills" -> resumeData.copy(technicalSkills = updateTechnicalSkills(resumeData.technicalSkills))
+            "certifications" -> resumeData.copy(certifications = resumeData.certifications + collectCertifications())
             else -> {
                 println("❌ Unknown section: $section")
                 return
@@ -140,6 +141,16 @@ class ResumeManager {
                     val updated = resumeData.projects.toMutableList()
                     updated.removeAt(index)
                     saveAndCommit(resumeData.copy(projects = updated), git, "Remove project from $targetBranch")
+                }
+            }
+
+            "certifications" -> {
+                displayCertifications(resumeData.certifications)
+                val index = readLine("Enter the number of certification to remove: ").toIntOrNull()
+                if (index != null && index in resumeData.certifications.indices) {
+                    val updated = resumeData.certifications.toMutableList()
+                    updated.removeAt(index)
+                    saveAndCommit(resumeData.copy(certifications = updated), git, "Remove certification from $targetBranch")
                 }
             }
 
@@ -284,14 +295,12 @@ class ResumeManager {
             val name = readLine("Certification Name: ").escapeLatexSpecialChars()
             val issuingOrganization = readLine("Issuing Organization: ").escapeLatexSpecialChars()
             val issueDate = readLine("Issue Date: ").escapeLatexSpecialChars()
-            val expirationDate = readLine("Expiration Date (optional): ").escapeLatexSpecialChars()
 
             certificationsList.add(
                 Certification(
                     name = name,
                     issuingOrganization = issuingOrganization,
-                    issueDate = issueDate,
-                    expirationDate = expirationDate
+                    issueDate = issueDate
                 )
             )
 
@@ -381,6 +390,13 @@ class ResumeManager {
         println("Frameworks: ${skills.frameworks.joinToString(", ")}")
         println("Technologies: ${skills.technologies.joinToString(", ")}")
         println("Libraries: ${skills.libraries.joinToString(", ")}")
+    }
+
+    private fun displayCertifications(certifications: List<Certification>) {
+        println("\n🏆 Certifications:")
+        certifications.forEachIndexed { index, cert ->
+            println("${index}. ${cert.name} from ${cert.issuingOrganization} on ${cert.issueDate}")
+        }
     }
 
     private fun saveAndCommit(data: ResumeData, git: Git, message: String) {

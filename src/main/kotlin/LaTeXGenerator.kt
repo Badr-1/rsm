@@ -268,12 +268,12 @@ class LaTeXGenerator {
             appendLine("  \\resumeSubHeadingListStart")
             groupByOrg.forEach { (org, certs) ->
                 if (certs.size == 1)
-                    appendLine("\\resumeProjectHeading{\\textbf{$org} ${certs[0].name}}{${certs[0].issueDate} -- ${certs[0].expirationDate}}")
+                    appendLine("\\resumeProjectHeading{\\textbf{$org} ${certs[0].name}}{${certs[0].issueDate}}")
                 else{
-                    appendLine("\\resumeProjectHeading{\\textbf{$org}")
+                    appendLine("\\resumeProjectHeading{\\textbf{$org}}{${certs.first().issueDate} -- ${certs.last().issueDate}}")
                     appendLine("\\resumeItemListStart")
                     certs.forEach { cert ->
-                        appendLine("\\resumeItem{${cert.name} (${cert.issueDate} -- ${cert.expirationDate})}")
+                        appendLine("\\resumeItem{${cert.name} (${cert.issueDate})}")
                     }
                     appendLine("\\resumeItemListEnd")
                 }
