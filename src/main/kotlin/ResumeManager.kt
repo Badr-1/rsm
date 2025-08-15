@@ -1,5 +1,6 @@
 import com.github.kinquirer.KInquirer
 import com.github.kinquirer.components.promptConfirm
+import com.github.kinquirer.components.promptList
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.encodeToString
 import models.Certification
@@ -117,47 +118,83 @@ class ResumeManager {
 
         when (section.lowercase()) {
             "education" -> {
-                displayEducationList(resumeData.education)
-                val index = readLine("Enter the number of education entry to remove: ").toIntOrNull()
-                if (index != null && index in resumeData.education.indices) {
-                    val updated = resumeData.education.toMutableList()
-                    updated.removeAt(index)
-                    saveAndCommit(resumeData.copy(education = updated), git, "Remove education from $targetBranch")
-                }
+                removeWhatFromWhere(
+                    git = git,
+                    where = section.lowercase(),
+                    resumeData = resumeData,
+                    message = "Select education entry to remove:",
+                    choices = resumeData.education.mapIndexed { index, edu -> "$index: ${edu.degree} at ${edu.institution}" },
+                    commitMessage = "Remove education from $targetBranch"
+                )
             }
 
             "experience" -> {
-                displayExperienceList(resumeData.experience)
-                val index = readLine("Enter the number of experience entry to remove: ").toIntOrNull()
-                if (index != null && index in resumeData.experience.indices) {
-                    val updated = resumeData.experience.toMutableList()
-                    updated.removeAt(index)
-                    saveAndCommit(resumeData.copy(experience = updated), git, "Remove experience from $targetBranch")
-                }
+                removeWhatFromWhere(
+                    git = git,
+                    where = section.lowercase(),
+                    resumeData = resumeData,
+                    message = "Select experience entry to remove:",
+                    choices = resumeData.experience.mapIndexed { index, exp -> "$index: ${exp.position} at ${exp.company}" },
+                    commitMessage = "Remove experience from $targetBranch"
+                )
             }
 
             "projects" -> {
-                displayProjectsList(resumeData.projects)
-                val index = readLine("Enter the number of project to remove: ").toIntOrNull()
-                if (index != null && index in resumeData.projects.indices) {
-                    val updated = resumeData.projects.toMutableList()
-                    updated.removeAt(index)
-                    saveAndCommit(resumeData.copy(projects = updated), git, "Remove project from $targetBranch")
-                }
+                removeWhatFromWhere(
+                    git = git,
+                    where = section.lowercase(),
+                    resumeData = resumeData,
+                    message = "Select project to remove: (${resumeData.projects.indices})",
+                    choices = resumeData.projects.mapIndexed { index, proj -> "$index: ${proj.name} (${proj.startDate} - ${proj.endDate})" },
+                    commitMessage = "Remove project from $targetBranch"
+                )
             }
 
             "certifications" -> {
-                displayCertifications(resumeData.certifications)
-                val index = readLine("Enter the number of certification to remove: ").toIntOrNull()
-                if (index != null && index in resumeData.certifications.indices) {
-                    val updated = resumeData.certifications.toMutableList()
-                    updated.removeAt(index)
-                    saveAndCommit(resumeData.copy(certifications = updated), git, "Remove certification from $targetBranch")
-                }
+                removeWhatFromWhere(
+                    git = git,
+                    where = section.lowercase(),
+                    resumeData = resumeData,
+                    message = "Select certification to remove:",
+                    choices = resumeData.certifications.mapIndexed { index, cert -> "$index: ${cert.name} by ${cert.issuingOrganization}" },
+                    commitMessage = "Remove certification from $targetBranch"
+                )
             }
 
             else -> println("❌ Unknown section: $section")
         }
+    }
+
+    private fun removeWhatFromWhere(
+        git: Git,
+        where: String,
+        resumeData: ResumeData,
+        message: String,
+        choices: List<String>,
+        commitMessage: String
+    ) {
+        val index = KInquirer.promptList(message, choices).split(":").first().toInt()
+        when(where)
+        {
+            "education" -> {
+                val updated = resumeData.education.toMutableList().apply { removeAt(index) }
+                saveAndCommit(resumeData.copy(education = updated), git, commitMessage)
+            }
+            "experience" -> {
+                val updated = resumeData.experience.toMutableList().apply { removeAt(index) }
+                saveAndCommit(resumeData.copy(experience = updated), git, commitMessage)
+            }
+            "projects" -> {
+                val updated = resumeData.projects.toMutableList().apply { removeAt(index) }
+                saveAndCommit(resumeData.copy(projects = updated), git, commitMessage)
+            }
+            "certifications" -> {
+                val updated = resumeData.certifications.toMutableList().apply { removeAt(index) }
+                saveAndCommit(resumeData.copy(certifications = updated), git, commitMessage)
+            }
+        }
+
+
     }
 
     private fun collectPersonalInfo(): PersonalInfo {
@@ -278,13 +315,17 @@ class ResumeManager {
         println("\n🔧 Technical Skills:")
 
         val languages =
-            readLine("Languages (comma-separated): ").split(",").map { it.trim().escapeLatexSpecialChars() }.filter { it.isNotEmpty() }
+            readLine("Languages (comma-separated): ").split(",").map { it.trim().escapeLatexSpecialChars() }
+                .filter { it.isNotEmpty() }
         val frameworks =
-            readLine("Frameworks (comma-separated): ").split(",").map { it.trim().escapeLatexSpecialChars() }.filter { it.isNotEmpty() }
+            readLine("Frameworks (comma-separated): ").split(",").map { it.trim().escapeLatexSpecialChars() }
+                .filter { it.isNotEmpty() }
         val developerTools =
-            readLine("Technologies (comma-separated): ").split(",").map { it.trim().escapeLatexSpecialChars() }.filter { it.isNotEmpty() }
+            readLine("Technologies (comma-separated): ").split(",").map { it.trim().escapeLatexSpecialChars() }
+                .filter { it.isNotEmpty() }
         val libraries =
-            readLine("Libraries (comma-separated): ").split(",").map { it.trim().escapeLatexSpecialChars() }.filter { it.isNotEmpty() }
+            readLine("Libraries (comma-separated): ").split(",").map { it.trim().escapeLatexSpecialChars() }
+                .filter { it.isNotEmpty() }
 
         return TechnicalSkills(languages, frameworks, developerTools, libraries)
     }
@@ -364,41 +405,12 @@ class ResumeManager {
         return readlnOrNull() ?: default
     }
 
-    // Helper methods for displaying lists and other operations...
-    private fun displayEducationList(education: List<Education>) {
-        println("\n🎓 Education:")
-        education.forEachIndexed { index, edu ->
-            println("${index}. ${edu.degree} at ${edu.institution}")
-        }
-    }
-
-    private fun displayExperienceList(experience: List<Experience>) {
-        println("\n💼 Experience:")
-        experience.forEachIndexed { index, exp ->
-            println("${index}. ${exp.position} at ${exp.company}")
-        }
-    }
-
-    private fun displayProjectsList(projects: List<Project>) {
-        println("\n🚀 Projects:")
-        projects.forEachIndexed { index, project ->
-            println("${index}. ${project.name}")
-        }
-    }
-
     private fun displayTechnicalSkills(skills: TechnicalSkills) {
         println("\n🔧 Technical Skills:")
         println("Languages: ${skills.languages.joinToString(", ")}")
         println("Frameworks: ${skills.frameworks.joinToString(", ")}")
         println("Technologies: ${skills.technologies.joinToString(", ")}")
         println("Libraries: ${skills.libraries.joinToString(", ")}")
-    }
-
-    private fun displayCertifications(certifications: List<Certification>) {
-        println("\n🏆 Certifications:")
-        certifications.forEachIndexed { index, cert ->
-            println("${index}. ${cert.name} from ${cert.issuingOrganization} on ${cert.issueDate}")
-        }
     }
 
     private fun saveAndCommit(data: ResumeData, git: Git, message: String) {
