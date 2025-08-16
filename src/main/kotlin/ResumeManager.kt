@@ -1,5 +1,6 @@
 import com.github.kinquirer.KInquirer
 import com.github.kinquirer.components.promptConfirm
+import com.github.kinquirer.components.promptInput
 import com.github.kinquirer.components.promptList
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.encodeToString
@@ -397,8 +398,7 @@ class ResumeManager {
     }
 
     private fun readLine(prompt: String, default: String = ""): String {
-        print(prompt)
-        return readlnOrNull() ?: default
+        return  KInquirer.promptInput(prompt, default)
     }
 
     private fun saveAndCommit(data: ResumeData, git: Git, message: String) {
