@@ -180,7 +180,7 @@ class LaTeXGenerator {
 
             experience.forEach { exp ->
                 appendLine("    \\resumeSubheading")
-                appendLine("      {${exp.position}}{${exp.startDate} -- ${exp.endDate}}")
+                appendLine("      {${exp.position}}{${exp.date}}")
                 appendLine("      {${exp.company}}{${exp.location}}")
 
                 if (exp.bullets.isNotEmpty()) {
@@ -206,7 +206,7 @@ class LaTeXGenerator {
 
             projects.forEach { project ->
                 appendLine("      \\resumeProjectHeading")
-                appendLine("          {\\textbf{${project.name}} $|$ \\emph{${project.technologies}}}{${project.startDate} -- ${project.endDate}}")
+                appendLine("          {\\textbf{${project.name}} $|$ \\emph{${project.technologies}}}{${project.date}}")
 
                 if (project.bullets.isNotEmpty()) {
                     appendLine("          \\resumeItemListStart")

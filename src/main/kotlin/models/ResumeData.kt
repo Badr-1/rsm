@@ -33,8 +33,7 @@ data class Experience(
     val company: String = "",
     val position: String = "",
     val location: String = "",
-    val startDate: String = "",
-    val endDate: String = "",
+    val date: String = "",
     val bullets: List<String> = emptyList()
 )
 
@@ -42,8 +41,7 @@ data class Experience(
 data class Project(
     val name: String = "",
     val technologies: String = "",
-    val startDate: String = "",
-    val endDate: String = "",
+    val date: String = "",
     val bullets: List<String> = emptyList()
 )
 

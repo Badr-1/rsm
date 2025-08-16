@@ -149,7 +149,7 @@ class ResumeManager {
                     where = section,
                     resumeData = resumeData,
                     message = "Select project to remove: (${resumeData.projects.indices})",
-                    choices = resumeData.projects.mapIndexed { index, proj -> "$index: ${proj.name} (${proj.startDate} - ${proj.endDate})" },
+                    choices = resumeData.projects.mapIndexed { index, proj -> "$index: ${proj.name} (${proj.date})" },
                     commitMessage = "Remove project from $targetBranch"
                 )
             }
@@ -247,8 +247,7 @@ class ResumeManager {
             val company = readLine("Company: ").escapeLatexSpecialChars()
             val position = readLine("Position: ").escapeLatexSpecialChars()
             val location = readLine("Location: ").escapeLatexSpecialChars()
-            val startDate = readLine("Start Date: ").escapeLatexSpecialChars()
-            val endDate = readLine("End Date (or 'Present'): ").escapeLatexSpecialChars()
+            val date = readLine("Date: ").escapeLatexSpecialChars()
 
             println("Bullet Points (press Enter on empty line to finish):")
             val bullets = mutableListOf<String>()
@@ -262,8 +261,7 @@ class ResumeManager {
                     company = company,
                     position = position,
                     location = location,
-                    startDate = startDate,
-                    endDate = endDate,
+                    date = date,
                     bullets = bullets
                 )
             )
@@ -281,8 +279,7 @@ class ResumeManager {
         do {
             val name = readLine("Project Name: ").escapeLatexSpecialChars()
             val technologies = readLine("Technologies: ").escapeLatexSpecialChars()
-            val startDate = readLine("Start Date: ").escapeLatexSpecialChars()
-            val endDate = readLine("End Date: ").escapeLatexSpecialChars()
+            val date = readLine("Date: ").escapeLatexSpecialChars()
 
             println("Project Details (press Enter on empty line to finish):")
             val bullets = mutableListOf<String>()
@@ -295,8 +292,7 @@ class ResumeManager {
                 Project(
                     name = name,
                     technologies = technologies,
-                    startDate = startDate,
-                    endDate = endDate,
+                    date = date,
                     bullets = bullets
                 )
             )
