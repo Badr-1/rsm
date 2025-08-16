@@ -78,8 +78,6 @@ class CompileCommand : CliktCommand(name = "compile", help = "Compile LaTeX resu
     private val open by option("--open", "-o", help = "Open PDF after compilation").flag()
 
     override fun run() {
-        val resumeFile = File("resume.tex")
-
         if (!resumeFile.exists()) {
             println("❌ resume.tex not found. Run 'resume init' first.")
             return
@@ -139,7 +137,6 @@ class CompileCommand : CliktCommand(name = "compile", help = "Compile LaTeX resu
     }
 
     private fun openPdf() {
-        val pdfFile = File("resume.pdf")
         if (pdfFile.exists()) {
             try {
                 val os = System.getProperty("os.name").lowercase()
@@ -166,8 +163,8 @@ class StatusCommand : CliktCommand(name = "status", help = "Show resume reposito
 
         val currentBranch = GitUtils.getCurrentBranch()
         val branches = GitUtils.listBranches()
-        val configExists = File(".resume-config.json").exists()
-        val resumeExists = File("resume.tex").exists()
+        val configExists = configFile.exists()
+        val resumeExists = resumeFile.exists()
 
         println("📊 Resume Repository Status")
         println("─".repeat(30))

@@ -15,18 +15,26 @@ import java.io.File
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 
+val configFile = File("resume-config.json")
+val resumeFile = File("resume.tex")
+val ignoreFile = File(".gitignore")
+val pdfFile = File("resume.pdf")
+
 class ResumeManager {
-    private val configFile = File("resume-config.json")
-    private val resumeFile = File("resume.tex")
     private val json = Json { prettyPrint = true }
 
     fun initializeResume() {
-        println("🚀 Initializing resume repository...")
-
-        // Initialize git repository
         val git = Git.init().setDirectory(File(".")).call()
 
         if (!configFile.exists()) {
+
+            ignoreFile.writeText(
+                """
+            # Ignore generated files
+            *.tex
+            *.pdf
+            """.trimIndent()
+            )
 
             // Interactive setup
             val personalInfo = collectPersonalInfo()
