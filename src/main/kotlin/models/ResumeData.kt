@@ -1,6 +1,14 @@
 package models
 
 import kotlinx.serialization.Serializable
+import java.util.Collections.emptyList
+
+enum class SectionType {
+    EDUCATION,
+    EXPERIENCE,
+    PROJECTS,
+    CERTIFICATIONS
+}
 
 @Serializable
 data class PersonalInfo(
