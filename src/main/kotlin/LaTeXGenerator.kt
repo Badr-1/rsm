@@ -164,12 +164,6 @@ class LaTeXGenerator {
                 appendLine("    \\resumeSubheading")
                 appendLine("      {${edu.institution}}{${edu.location}}")
                 appendLine("      {${edu.degree}${if (edu.gpa.isNotEmpty()) "; GPA: ${edu.gpa}" else ""}}{${edu.graduationDate}}")
-
-                if (edu.relevantCourses.isNotEmpty()) {
-                    appendLine("      \\resumeItemListStart")
-                    appendLine("        \\resumeItem{\\textbf{Relevant Courses:} ${edu.relevantCourses.joinToString(", ")}}")
-                    appendLine("      \\resumeItemListEnd")
-                }
             }
 
             appendLine("  \\resumeSubHeadingListEnd")

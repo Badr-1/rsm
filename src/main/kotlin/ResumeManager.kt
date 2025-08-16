@@ -219,13 +219,6 @@ class ResumeManager {
             val graduationDate = readLine("Graduation Date: ").escapeLatexSpecialChars()
             val gpa = readLine("GPA (optional): ").escapeLatexSpecialChars()
 
-            println("Relevant Courses (press Enter on empty line to finish):")
-            val courses = mutableListOf<String>()
-            do {
-                val course = readLine("Course: ").escapeLatexSpecialChars()
-                if (course.isNotBlank()) courses.add(course)
-            } while (course.isNotBlank())
-
             educationList.add(
                 Education(
                     institution = institution,

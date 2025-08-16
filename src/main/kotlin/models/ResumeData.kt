@@ -18,7 +18,6 @@ data class Education(
     val location: String = "",
     val graduationDate: String = "",
     val gpa: String = "",
-    val relevantCourses: List<String> = emptyList()
 )
 
 @Serializable
