@@ -46,7 +46,7 @@ class AddCommand : CliktCommand(name = "add", help = "Add content to resume") {
         val section = SectionType.valueOf(
             KInquirer.promptList(
                 "What section do you want to add content to?",
-                sections.map { it.name.lowercase() })
+                sections.map { it.name.lowercase().replaceFirstChar { c-> c.uppercase() } }).uppercase()
         )
         val target = KInquirer.promptList("Select the target branch for this section:", targets)
 
@@ -64,7 +64,7 @@ class RemoveCommand : CliktCommand(name = "remove", help = "Remove content from 
         val section = SectionType.valueOf(
             KInquirer.promptList(
                 "What section do you want to add content to?",
-                sections.map { it.name.lowercase() })
+                sections.map { it.name.lowercase().replaceFirstChar { c-> c.uppercase() } }).uppercase()
         )
         val target = KInquirer.promptList("Select the target branch for this section:", targets)
 
