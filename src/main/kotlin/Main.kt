@@ -5,6 +5,8 @@ import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.kinquirer.KInquirer
 import com.github.kinquirer.components.promptList
+import models.SectionType
+import models.SectionType.*
 import utils.FileUtils
 import utils.GitUtils
 import java.io.File
@@ -31,10 +33,10 @@ class CreateRoleCommand : CliktCommand(name = "create", help = "Create a new rol
 
 class AddCommand : CliktCommand(name = "add", help = "Add content to resume") {
     override fun run() {
-        val sections = listOf("education", "experience", "projects", "skills", "certifications")
+        val sections = listOf(EDUCATION, EXPERIENCE, PROJECTS, CERTIFICATIONS)
         val targets = GitUtils.listBranches()
 
-        val section = KInquirer.promptList("What section do you want to add content to?", sections)
+        val section = SectionType.valueOf(KInquirer.promptList("What section do you want to add content to?", sections.map { it.name.lowercase() }))
         val target = KInquirer.promptList("Select the target branch for this section:", targets)
 
         val resumeManager = ResumeManager()
@@ -45,10 +47,10 @@ class AddCommand : CliktCommand(name = "add", help = "Add content to resume") {
 class RemoveCommand : CliktCommand(name = "remove", help = "Remove content from resume") {
 
     override fun run() {
-        val sections = listOf("education", "experience", "projects", "skills", "certifications")
+        val sections = listOf(EDUCATION, EXPERIENCE, PROJECTS, CERTIFICATIONS)
         val targets = GitUtils.listBranches()
 
-        val section = KInquirer.promptList("What section do you want to add content to?", sections)
+        val section = SectionType.valueOf(KInquirer.promptList("What section do you want to add content to?", sections.map { it.name.lowercase() }))
         val target = KInquirer.promptList("Select the target branch for this section:", targets)
 
         val resumeManager = ResumeManager()

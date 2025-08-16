@@ -66,9 +66,9 @@ data class Certification(
 @Serializable
 data class ResumeData(
     val personalInfo: PersonalInfo = PersonalInfo(),
-    val education: List<Education> = emptyList(),
-    val experience: List<Experience> = emptyList(),
-    val projects: List<Project> = emptyList(),
+    val education: MutableList<Education> = emptyList(),
+    val experience: MutableList<Experience> = emptyList(),
+    val projects: MutableList<Project> = emptyList(),
     val technicalSkills: TechnicalSkills = TechnicalSkills(),
-    val certifications: List<Certification> = emptyList()
+    val certifications: MutableList<Certification> = emptyList()
 )

@@ -9,6 +9,7 @@ import models.Experience
 import models.PersonalInfo
 import models.Project
 import models.ResumeData
+import models.SectionType
 import models.TechnicalSkills
 import java.io.File
 import org.eclipse.jgit.api.Git
@@ -30,11 +31,11 @@ class ResumeManager {
         if (!configFile.exists()) {
             // Interactive setup
             val personalInfo = collectPersonalInfo()
-            val education = collectEducation()
-            val experience = collectExperience()
-            val projects = collectProjects()
-            val skills = collectTechnicalSkills()
-            val certifications = collectCertifications()
+            val education = collectEducation("\n🎓 Education:")
+            val experience = collectExperience("\n💼 Experience:")
+            val projects = collectProjects("\n🚀 Projects:")
+            val skills = collectTechnicalSkills("\n🔧 Technical Skills:")
+            val certifications = collectCertifications("\n🏆 Certifications:")
 
             resumeData = ResumeData(
                 personalInfo = personalInfo,
@@ -78,7 +79,7 @@ class ResumeManager {
         }
     }
 
-    fun addToSection(section: String, target: String?) {
+    fun addToSection(section: SectionType, target: String?) {
         val git = openGitRepository()
         val targetBranch = target ?: getCurrentBranch(git)
 
@@ -86,20 +87,15 @@ class ResumeManager {
         git.checkout().setName(targetBranch).call()
 
         val resumeData = loadConfig()
-        val updatedData = when (section.lowercase()) {
-            "education" -> resumeData.copy(education = resumeData.education + collectNewEducation())
-            "experience" -> resumeData.copy(experience = resumeData.experience + collectNewExperience())
-            "projects" -> resumeData.copy(projects = resumeData.projects + collectNewProject())
-            "skills" -> resumeData.copy(technicalSkills = updateTechnicalSkills(resumeData.technicalSkills))
-            "certifications" -> resumeData.copy(certifications = resumeData.certifications + collectCertifications())
-            else -> {
-                println("❌ Unknown section: $section")
-                return
-            }
+        when (section) {
+            SectionType.EDUCATION -> resumeData.education.addAll(collectEducation("add new education entry:"))
+            SectionType.EXPERIENCE -> resumeData.experience.addAll(collectExperience("add new experience entry:"))
+            SectionType.PROJECTS -> resumeData.projects.addAll(collectProjects("add new project entry:"))
+            SectionType.CERTIFICATIONS -> resumeData.certifications.addAll(collectCertifications("add new certification entry:"))
         }
 
-        saveConfig(updatedData)
-        generateLatexFile(updatedData)
+        saveConfig(resumeData)
+        generateLatexFile(resumeData)
 
         // Commit changes
         git.add().addFilepattern(".").call()
@@ -108,7 +104,7 @@ class ResumeManager {
         println("✅ Added $section to $targetBranch branch")
     }
 
-    fun removeFromSection(section: String, target: String?) {
+    fun removeFromSection(section: SectionType, target: String?) {
         val git = openGitRepository()
         val targetBranch = target ?: getCurrentBranch(git)
 
@@ -116,11 +112,11 @@ class ResumeManager {
 
         val resumeData = loadConfig()
 
-        when (section.lowercase()) {
-            "education" -> {
+        when (section) {
+            SectionType.EDUCATION -> {
                 removeWhatFromWhere(
                     git = git,
-                    where = section.lowercase(),
+                    where = section,
                     resumeData = resumeData,
                     message = "Select education entry to remove:",
                     choices = resumeData.education.mapIndexed { index, edu -> "$index: ${edu.degree} at ${edu.institution}" },
@@ -128,10 +124,10 @@ class ResumeManager {
                 )
             }
 
-            "experience" -> {
+            SectionType.EXPERIENCE -> {
                 removeWhatFromWhere(
                     git = git,
-                    where = section.lowercase(),
+                    where = section,
                     resumeData = resumeData,
                     message = "Select experience entry to remove:",
                     choices = resumeData.experience.mapIndexed { index, exp -> "$index: ${exp.position} at ${exp.company}" },
@@ -139,10 +135,10 @@ class ResumeManager {
                 )
             }
 
-            "projects" -> {
+            SectionType.PROJECTS -> {
                 removeWhatFromWhere(
                     git = git,
-                    where = section.lowercase(),
+                    where = section,
                     resumeData = resumeData,
                     message = "Select project to remove: (${resumeData.projects.indices})",
                     choices = resumeData.projects.mapIndexed { index, proj -> "$index: ${proj.name} (${proj.startDate} - ${proj.endDate})" },
@@ -150,46 +146,46 @@ class ResumeManager {
                 )
             }
 
-            "certifications" -> {
+            SectionType.CERTIFICATIONS -> {
                 removeWhatFromWhere(
                     git = git,
-                    where = section.lowercase(),
+                    where = section,
                     resumeData = resumeData,
                     message = "Select certification to remove:",
                     choices = resumeData.certifications.mapIndexed { index, cert -> "$index: ${cert.name} by ${cert.issuingOrganization}" },
                     commitMessage = "Remove certification from $targetBranch"
                 )
             }
-
-            else -> println("❌ Unknown section: $section")
         }
     }
 
     private fun removeWhatFromWhere(
         git: Git,
-        where: String,
+        where: SectionType,
         resumeData: ResumeData,
         message: String,
         choices: List<String>,
         commitMessage: String
     ) {
         val index = KInquirer.promptList(message, choices).split(":").first().toInt()
-        when(where)
-        {
-            "education" -> {
-                val updated = resumeData.education.toMutableList().apply { removeAt(index) }
+        when (where) {
+            SectionType.EDUCATION -> {
+                val updated = resumeData.education.apply { removeAt(index) }
                 saveAndCommit(resumeData.copy(education = updated), git, commitMessage)
             }
-            "experience" -> {
-                val updated = resumeData.experience.toMutableList().apply { removeAt(index) }
+
+            SectionType.EXPERIENCE -> {
+                val updated = resumeData.experience.apply { removeAt(index) }
                 saveAndCommit(resumeData.copy(experience = updated), git, commitMessage)
             }
-            "projects" -> {
-                val updated = resumeData.projects.toMutableList().apply { removeAt(index) }
+
+            SectionType.PROJECTS -> {
+                val updated = resumeData.projects.apply { removeAt(index) }
                 saveAndCommit(resumeData.copy(projects = updated), git, commitMessage)
             }
-            "certifications" -> {
-                val updated = resumeData.certifications.toMutableList().apply { removeAt(index) }
+
+            SectionType.CERTIFICATIONS -> {
+                val updated = resumeData.certifications.apply { removeAt(index) }
                 saveAndCommit(resumeData.copy(certifications = updated), git, commitMessage)
             }
         }
@@ -208,8 +204,8 @@ class ResumeManager {
         return PersonalInfo(name, phone, email, linkedin, github)
     }
 
-    private fun collectEducation(): List<Education> {
-        println("\n🎓 Education:")
+    private fun collectEducation(prompt: String): MutableList<Education> {
+        println(prompt)
         val educationList = mutableListOf<Education>()
 
         do {
@@ -226,7 +222,6 @@ class ResumeManager {
                     location = location,
                     graduationDate = graduationDate,
                     gpa = gpa,
-                    relevantCourses = courses
                 )
             )
 
@@ -236,8 +231,8 @@ class ResumeManager {
         return educationList
     }
 
-    private fun collectExperience(): List<Experience> {
-        println("\n💼 Experience:")
+    private fun collectExperience(prompt: String): MutableList<Experience> {
+        println(prompt)
         val experienceList = mutableListOf<Experience>()
 
         do {
@@ -271,8 +266,8 @@ class ResumeManager {
         return experienceList
     }
 
-    private fun collectProjects(): List<Project> {
-        println("\n🚀 Projects:")
+    private fun collectProjects(prompt: String): MutableList<Project> {
+        println(prompt)
         val projectsList = mutableListOf<Project>()
 
         do {
@@ -304,8 +299,8 @@ class ResumeManager {
         return projectsList
     }
 
-    private fun collectTechnicalSkills(): TechnicalSkills {
-        println("\n🔧 Technical Skills:")
+    private fun collectTechnicalSkills(prompt: String): TechnicalSkills {
+        println(prompt)
 
         val languages =
             readLine("Languages (comma-separated): ").split(",").map { it.trim().escapeLatexSpecialChars() }
@@ -323,8 +318,8 @@ class ResumeManager {
         return TechnicalSkills(languages, frameworks, developerTools, libraries)
     }
 
-    private fun collectCertifications(): List<Certification> {
-        println("\n🏆 Certifications:")
+    private fun collectCertifications(prompt: String): MutableList<Certification> {
+        println(prompt)
         val certificationsList = mutableListOf<Certification>()
 
         do {
@@ -362,9 +357,9 @@ class ResumeManager {
         return if (configFile.exists()) {
             Json.decodeFromString<ResumeData>(configFile.readText()).let { data ->
                 data.copy(
-                    education = data.education.filter { it.toString().isNotBlank() },
-                    experience = data.experience.filter { it.toString().isNotBlank() },
-                    projects = data.projects.filter { it.toString().isNotBlank() },
+                    education = data.education.filter { it.toString().isNotBlank() }.toMutableList(),
+                    experience = data.experience.filter { it.toString().isNotBlank() }.toMutableList(),
+                    projects = data.projects.filter { it.toString().isNotBlank() }.toMutableList(),
                     technicalSkills = data.technicalSkills.copy(
                         languages = data.technicalSkills.languages.filter { it.isNotBlank() },
                         frameworks = data.technicalSkills.frameworks.filter { it.isNotBlank() },
@@ -414,26 +409,10 @@ class ResumeManager {
         println("✅ $message")
     }
 
-    // Additional helper methods for collecting new entries...
-    private fun collectNewEducation(): Education {
-        println("Adding new education entry:")
-        return collectEducation().first()
-    }
-
-    private fun collectNewExperience(): Experience {
-        println("Adding new experience entry:")
-        return collectExperience().first()
-    }
-
-    private fun collectNewProject(): Project {
-        println("Adding new project:")
-        return collectProjects().first()
-    }
-
     private fun updateTechnicalSkills(current: TechnicalSkills): TechnicalSkills {
         displayTechnicalSkills(current)
 
-        val newSkills = collectTechnicalSkills()
+        val newSkills = collectTechnicalSkills("\n🔧 Technical Skills:")
 
         return TechnicalSkills(
             languages = (current.languages + newSkills.languages).distinct(),
