@@ -393,33 +393,12 @@ class ResumeManager {
         return readlnOrNull() ?: default
     }
 
-    private fun displayTechnicalSkills(skills: TechnicalSkills) {
-        println("\n🔧 Technical Skills:")
-        println("Languages: ${skills.languages.joinToString(", ")}")
-        println("Frameworks: ${skills.frameworks.joinToString(", ")}")
-        println("Technologies: ${skills.technologies.joinToString(", ")}")
-        println("Libraries: ${skills.libraries.joinToString(", ")}")
-    }
-
     private fun saveAndCommit(data: ResumeData, git: Git, message: String) {
         saveConfig(data)
         generateLatexFile(data)
         git.add().addFilepattern(".").call()
         git.commit().setMessage(message).call()
         println("✅ $message")
-    }
-
-    private fun updateTechnicalSkills(current: TechnicalSkills): TechnicalSkills {
-        displayTechnicalSkills(current)
-
-        val newSkills = collectTechnicalSkills("\n🔧 Technical Skills:")
-
-        return TechnicalSkills(
-            languages = (current.languages + newSkills.languages).distinct(),
-            frameworks = (current.frameworks + newSkills.frameworks).distinct(),
-            technologies = (current.technologies + newSkills.technologies).distinct(),
-            libraries = (current.libraries + newSkills.libraries).distinct()
-        )
     }
 
     private fun String.escapeLatexSpecialChars(): String {
