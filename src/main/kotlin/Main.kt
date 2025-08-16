@@ -22,6 +22,13 @@ class InitCommand : CliktCommand(name = "init", help = "Initialize a new resume 
     }
 }
 
+class GenerateCommand : CliktCommand(name = "generate", help = "Generate LaTeX resume from configuration") {
+    override fun run() {
+        val resumeManager = ResumeManager()
+        resumeManager.generateLatexFile()
+    }
+}
+
 class CreateRoleCommand : CliktCommand(name = "create", help = "Create a new role-specific branch") {
     private val roleName by argument(help = "Name of the role/position")
 
@@ -36,7 +43,11 @@ class AddCommand : CliktCommand(name = "add", help = "Add content to resume") {
         val sections = listOf(EDUCATION, EXPERIENCE, PROJECTS, CERTIFICATIONS)
         val targets = GitUtils.listBranches()
 
-        val section = SectionType.valueOf(KInquirer.promptList("What section do you want to add content to?", sections.map { it.name.lowercase() }))
+        val section = SectionType.valueOf(
+            KInquirer.promptList(
+                "What section do you want to add content to?",
+                sections.map { it.name.lowercase() })
+        )
         val target = KInquirer.promptList("Select the target branch for this section:", targets)
 
         val resumeManager = ResumeManager()
@@ -50,7 +61,11 @@ class RemoveCommand : CliktCommand(name = "remove", help = "Remove content from 
         val sections = listOf(EDUCATION, EXPERIENCE, PROJECTS, CERTIFICATIONS)
         val targets = GitUtils.listBranches()
 
-        val section = SectionType.valueOf(KInquirer.promptList("What section do you want to add content to?", sections.map { it.name.lowercase() }))
+        val section = SectionType.valueOf(
+            KInquirer.promptList(
+                "What section do you want to add content to?",
+                sections.map { it.name.lowercase() })
+        )
         val target = KInquirer.promptList("Select the target branch for this section:", targets)
 
         val resumeManager = ResumeManager()
@@ -168,5 +183,13 @@ class StatusCommand : CliktCommand(name = "status", help = "Show resume reposito
 }
 
 fun main(args: Array<String>) = ResumeCLI()
-    .subcommands(InitCommand(), CreateRoleCommand(), AddCommand(), RemoveCommand(), CompileCommand(), StatusCommand())
+    .subcommands(
+        InitCommand(),
+        GenerateCommand(),
+        CreateRoleCommand(),
+        AddCommand(),
+        RemoveCommand(),
+        CompileCommand(),
+        StatusCommand()
+    )
     .main(args)

@@ -16,7 +16,7 @@ import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 
 class ResumeManager {
-    private val configFile = File(".resume-config.json")
+    private val configFile = File("resume-config.json")
     private val resumeFile = File("resume.tex")
     private val json = Json { prettyPrint = true }
 
@@ -26,9 +26,8 @@ class ResumeManager {
         // Initialize git repository
         val git = Git.init().setDirectory(File(".")).call()
 
-        var resumeData = loadConfig()
-
         if (!configFile.exists()) {
+
             // Interactive setup
             val personalInfo = collectPersonalInfo()
             val education = collectEducation("\n🎓 Education:")
@@ -37,7 +36,7 @@ class ResumeManager {
             val skills = collectTechnicalSkills("\n🔧 Technical Skills:")
             val certifications = collectCertifications("\n🏆 Certifications:")
 
-            resumeData = ResumeData(
+            val resumeData = ResumeData(
                 personalInfo = personalInfo,
                 education = education,
                 experience = experience,
@@ -53,14 +52,16 @@ class ResumeManager {
             git.commit().setMessage("Initial resume setup").call()
 
             println("✅ Resume initialized successfully!")
-            println("📝 Edit resume.tex or use 'resume add/remove' commands to modify")
-            println("🔄 Use 'resume create <role-name>' to create role-specific versions")
+            println("💡 Use 'resume generate' to create the LaTeX file")
+            println("💡 Use 'resume create <role>' to create a new role-specific branch")
+            println("💡 Use 'resume add/remove' to modify sections in your resume")
+
+        } else {
+            println("📄 Resume configuration already exists.")
+            println("💡 Use 'resume create <role>' to create a new role-specific branch")
+            println("💡 Use 'resume add/remove' to modify sections in your resume")
+            println("💡 Use 'resume compile ' to compile the LaTeX file into PDF")
         }
-
-
-        generateLatexFile(resumeData)
-
-
     }
 
     fun createRoleBranch(roleName: String) {
@@ -95,7 +96,6 @@ class ResumeManager {
         }
 
         saveConfig(resumeData)
-        generateLatexFile(resumeData)
 
         // Commit changes
         git.add().addFilepattern(".").call()
@@ -341,10 +341,14 @@ class ResumeManager {
         return certificationsList
     }
 
-    private fun generateLatexFile(data: ResumeData) {
-        val latex = LaTeXGenerator().generate(data)
-        resumeFile.writeText(latex)
-        println("📄 Generated resume.tex")
+    fun generateLatexFile() {
+        if (configFile.exists()) {
+            val latex = LaTeXGenerator().generate(loadConfig())
+            resumeFile.writeText(latex)
+            println("📄 Generated resume.tex")
+        } else {
+            println("❌ No configuration found. Please run 'resume init' first.")
+        }
     }
 
 
@@ -395,7 +399,6 @@ class ResumeManager {
 
     private fun saveAndCommit(data: ResumeData, git: Git, message: String) {
         saveConfig(data)
-        generateLatexFile(data)
         git.add().addFilepattern(".").call()
         git.commit().setMessage(message).call()
         println("✅ $message")
