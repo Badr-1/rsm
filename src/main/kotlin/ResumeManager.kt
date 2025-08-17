@@ -2,7 +2,6 @@ import com.github.kinquirer.KInquirer
 import com.github.kinquirer.components.promptCheckbox
 import com.github.kinquirer.components.promptConfirm
 import com.github.kinquirer.components.promptInput
-import com.github.kinquirer.components.promptList
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.encodeToString
 import models.Certification
@@ -134,7 +133,7 @@ class ResumeManager {
                     where = section,
                     resumeData = resumeData,
                     message = "Select education entry to remove:",
-                    choices = resumeData.education.mapIndexed { index, edu -> "$index: ${edu.degree} at ${edu.institution}" },
+                    choices = resumeData.education.map { edu -> "${edu.degree} at ${edu.institution}" },
                     commitMessage = "Remove education from $targetBranch"
                 )
             }
@@ -145,7 +144,7 @@ class ResumeManager {
                     where = section,
                     resumeData = resumeData,
                     message = "Select experience entry to remove:",
-                    choices = resumeData.experience.mapIndexed { index, exp -> "$index: ${exp.position} at ${exp.company}" },
+                    choices = resumeData.experience.map { exp -> "${exp.position} at ${exp.company}" },
                     commitMessage = "Remove experience from $targetBranch"
                 )
             }
@@ -155,8 +154,8 @@ class ResumeManager {
                     git = git,
                     where = section,
                     resumeData = resumeData,
-                    message = "Select project to remove: (${resumeData.projects.indices})",
-                    choices = resumeData.projects.mapIndexed { index, proj -> "$index: ${proj.name} (${proj.date})" },
+                    message = "Select project to remove:",
+                    choices = resumeData.projects.map { proj -> "${proj.name} (${proj.date})" },
                     commitMessage = "Remove project from $targetBranch"
                 )
             }
@@ -167,7 +166,7 @@ class ResumeManager {
                     where = section,
                     resumeData = resumeData,
                     message = "Select technical skill to remove:",
-                    choices = TechnicalSkillType.entries.mapIndexed { index, skillType -> "$index: ${skillType.name.lowercase()}" },
+                    choices = TechnicalSkillType.entries.map { skillType -> skillType.name.lowercase() },
                     commitMessage = "Remove technical skills from $targetBranch"
                 )
             }
@@ -178,7 +177,7 @@ class ResumeManager {
                     where = section,
                     resumeData = resumeData,
                     message = "Select certification to remove:",
-                    choices = resumeData.certifications.mapIndexed { index, cert -> "$index: ${cert.name} by ${cert.issuingOrganization}" },
+                    choices = resumeData.certifications.map { cert -> "${cert.name} by ${cert.issuingOrganization}" },
                     commitMessage = "Remove certification from $targetBranch"
                 )
             }
@@ -193,73 +192,75 @@ class ResumeManager {
         choices: List<String>,
         commitMessage: String
     ) {
-        val index = KInquirer.promptList(message, choices).split(":").first().toInt()
+        val items = KInquirer.promptCheckbox(message, choices, minNumOfSelection = 1, hint = "pick using spacebar")
         when (where) {
             SectionType.EDUCATION -> {
-                resumeData.education.apply { removeAt(index) }
+                items.forEach { item -> resumeData.education.apply { removeIf { edu -> "${edu.degree} at ${edu.institution}" == item } } }
                 saveAndCommit(resumeData, git, commitMessage)
             }
 
             SectionType.EXPERIENCE -> {
-                resumeData.experience.apply { removeAt(index) }
+                items.forEach { item -> resumeData.experience.apply { removeIf { exp -> "${exp.position} at ${exp.company}" == item } } }
                 saveAndCommit(resumeData, git, commitMessage)
             }
 
             SectionType.PROJECTS -> {
-                resumeData.projects.apply { removeAt(index) }
+                items.forEach { item -> resumeData.projects.apply { removeIf { proj -> "${proj.name} (${proj.date})" == item } } }
                 saveAndCommit(resumeData, git, commitMessage)
             }
 
             SectionType.TECHNICAL_SKILLS -> {
-                when (val skillType = TechnicalSkillType.entries[index]) {
-                    TechnicalSkillType.LANGUAGES -> {
-                        removeTechnicalSkill(
-                            git = git,
-                            where = skillType,
-                            resumeData = resumeData,
-                            message = "Select language to remove:",
-                            choices = resumeData.technicalSkills.languages,
-                            commitMessage = commitMessage
-                        )
-                    }
+                items.forEach { item ->
+                    when (val skillType = TechnicalSkillType.valueOf(item.uppercase())) {
+                        TechnicalSkillType.LANGUAGES -> {
+                            removeTechnicalSkill(
+                                git = git,
+                                where = skillType,
+                                resumeData = resumeData,
+                                message = "Select language to remove:",
+                                choices = resumeData.technicalSkills.languages,
+                                commitMessage = commitMessage
+                            )
+                        }
 
-                    TechnicalSkillType.FRAMEWORKS -> {
-                        removeTechnicalSkill(
-                            git = git,
-                            where = skillType,
-                            resumeData = resumeData,
-                            message = "Select framework to remove:",
-                            choices = resumeData.technicalSkills.frameworks,
-                            commitMessage = commitMessage
-                        )
-                    }
+                        TechnicalSkillType.FRAMEWORKS -> {
+                            removeTechnicalSkill(
+                                git = git,
+                                where = skillType,
+                                resumeData = resumeData,
+                                message = "Select framework to remove:",
+                                choices = resumeData.technicalSkills.frameworks,
+                                commitMessage = commitMessage
+                            )
+                        }
 
-                    TechnicalSkillType.TECHNOLOGIES -> {
-                        removeTechnicalSkill(
-                            git = git,
-                            where = skillType,
-                            resumeData = resumeData,
-                            message = "Select technology to remove:",
-                            choices = resumeData.technicalSkills.technologies,
-                            commitMessage = commitMessage
-                        )
-                    }
+                        TechnicalSkillType.TECHNOLOGIES -> {
+                            removeTechnicalSkill(
+                                git = git,
+                                where = skillType,
+                                resumeData = resumeData,
+                                message = "Select technology to remove:",
+                                choices = resumeData.technicalSkills.technologies,
+                                commitMessage = commitMessage
+                            )
+                        }
 
-                    TechnicalSkillType.LIBRARIES -> {
-                        removeTechnicalSkill(
-                            git = git,
-                            where = skillType,
-                            resumeData = resumeData,
-                            message = "Select library to remove:",
-                            choices = resumeData.technicalSkills.libraries,
-                            commitMessage = commitMessage
-                        )
+                        TechnicalSkillType.LIBRARIES -> {
+                            removeTechnicalSkill(
+                                git = git,
+                                where = skillType,
+                                resumeData = resumeData,
+                                message = "Select library to remove:",
+                                choices = resumeData.technicalSkills.libraries,
+                                commitMessage = commitMessage
+                            )
+                        }
                     }
                 }
             }
 
             SectionType.CERTIFICATIONS -> {
-                resumeData.certifications.apply { removeAt(index) }
+                items.forEach { item -> resumeData.certifications.apply { removeIf { cert -> "${cert.name} by ${cert.issuingOrganization}" == item } } }
                 saveAndCommit(resumeData, git, commitMessage)
             }
         }
