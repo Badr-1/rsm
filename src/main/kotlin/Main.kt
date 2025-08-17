@@ -8,6 +8,7 @@ import com.github.kinquirer.components.promptList
 import models.SectionType
 import utils.FileUtils
 import utils.GitUtils
+import java.awt.Desktop
 import java.io.File
 
 class ResumeCLI : CliktCommand(name = "resume") {
@@ -94,6 +95,7 @@ class CompileCommand : CliktCommand(name = "compile", help = "Compile LaTeX resu
             val process = ProcessBuilder("pdflatex", "resume.tex")
                 .directory(File("."))
                 .redirectErrorStream(true)
+                .redirectOutput(ProcessBuilder.Redirect.to(File(if (System.getProperty("os.name").lowercase().contains("win")) "NUL" else "/dev/null")))
                 .start()
 
             val exitCode = process.waitFor()
@@ -136,11 +138,8 @@ class CompileCommand : CliktCommand(name = "compile", help = "Compile LaTeX resu
     private fun openPdf() {
         if (pdfFile.exists()) {
             try {
-                val os = System.getProperty("os.name").lowercase()
-                when {
-                    os.contains("mac") -> Runtime.getRuntime().exec("open resume.pdf")
-                    os.contains("win") -> Runtime.getRuntime().exec("start resume.pdf")
-                    else -> Runtime.getRuntime().exec("xdg-open resume.pdf")
+                if(Desktop.isDesktopSupported()){
+                    Desktop.getDesktop().open(pdfFile)
                 }
                 println("📖 Opened resume.pdf")
             } catch (e: Exception) {
