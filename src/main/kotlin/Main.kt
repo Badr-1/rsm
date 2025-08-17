@@ -82,7 +82,7 @@ class CompileCommand : CliktCommand(name = "compile", help = "Compile LaTeX resu
             return
         }
 
-        // Validate LaTeX file
+        
         val errors = FileUtils.validateLatexFile(resumeFile)
         if (errors.isNotEmpty()) {
             println("❌ LaTeX validation errors:")

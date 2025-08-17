@@ -49,7 +49,7 @@ tasks.jar {
     duplicatesStrategy = DuplicatesStrategy.INCLUDE
 }
 
-// Create a distribution task for easy deployment
+
 tasks.register<Zip>("createDistribution") {
     dependsOn("jar")
     from("build/libs")
@@ -57,7 +57,7 @@ tasks.register<Zip>("createDistribution") {
         into("bin")
         filePermissions {
             unix("rwxr-xr-x")
-        } // 755 in octal
+        } 
     }
     archiveFileName.set("resume-cli-${version}.zip")
 }

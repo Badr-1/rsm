@@ -6,8 +6,8 @@ import models.Project
 import models.ResumeData
 import models.TechnicalSkills
 
-// LaTeX file generator
-// File: src/main/kotlin/LaTeXGenerator.kt
+
+
 class LaTeXGenerator {
 
     fun generate(data: ResumeData): String {

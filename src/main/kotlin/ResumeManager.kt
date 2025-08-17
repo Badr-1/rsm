@@ -38,7 +38,7 @@ class ResumeManager {
             """.trimIndent()
             )
 
-            // Interactive setup
+            
             val personalInfo = collectPersonalInfo()
             val education = collectEducation("\n🎓 Education:")
             val experience = collectExperience("\n💼 Experience:")
@@ -54,10 +54,10 @@ class ResumeManager {
                 technicalSkills = skills,
                 certifications = certifications
             )
-            // Save configuration
+            
             saveConfig(resumeData)
 
-            // Initial commit
+            
             git.add().addFilepattern(".").call()
             git.commit().setMessage("Initial resume setup").call()
 
@@ -81,7 +81,7 @@ class ResumeManager {
         try {
             val git = openGitRepository()
 
-            // Create new branch from main
+            
             git.checkout().setName("main").call()
             git.checkout().setCreateBranch(true).setName(roleName).call()
 
@@ -97,7 +97,7 @@ class ResumeManager {
         val git = openGitRepository()
         val targetBranch = target ?: getCurrentBranch(git)
 
-        // Switch to target branch
+        
         git.checkout().setName(targetBranch).call()
 
         val resumeData = loadConfig()
@@ -111,7 +111,7 @@ class ResumeManager {
 
         saveConfig(resumeData)
 
-        // Commit changes
+        
         git.add().addFilepattern(".").call()
         git.commit().setMessage("Add $section to $targetBranch").call()
 
