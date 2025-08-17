@@ -1,4 +1,5 @@
 import com.github.kinquirer.KInquirer
+import com.github.kinquirer.components.promptCheckbox
 import com.github.kinquirer.components.promptConfirm
 import com.github.kinquirer.components.promptInput
 import com.github.kinquirer.components.promptList
@@ -217,7 +218,7 @@ class ResumeManager {
                             where = skillType,
                             resumeData = resumeData,
                             message = "Select language to remove:",
-                            choices = resumeData.technicalSkills.languages.mapIndexed { idx, lang -> "$idx: $lang" },
+                            choices = resumeData.technicalSkills.languages,
                             commitMessage = commitMessage
                         )
                     }
@@ -228,7 +229,7 @@ class ResumeManager {
                             where = skillType,
                             resumeData = resumeData,
                             message = "Select framework to remove:",
-                            choices = resumeData.technicalSkills.frameworks.mapIndexed { idx, fw -> "$idx: $fw" },
+                            choices = resumeData.technicalSkills.frameworks,
                             commitMessage = commitMessage
                         )
                     }
@@ -239,7 +240,7 @@ class ResumeManager {
                             where = skillType,
                             resumeData = resumeData,
                             message = "Select technology to remove:",
-                            choices = resumeData.technicalSkills.technologies.mapIndexed { idx, tech -> "$idx: $tech" },
+                            choices = resumeData.technicalSkills.technologies,
                             commitMessage = commitMessage
                         )
                     }
@@ -250,7 +251,7 @@ class ResumeManager {
                             where = skillType,
                             resumeData = resumeData,
                             message = "Select library to remove:",
-                            choices = resumeData.technicalSkills.libraries.mapIndexed { idx, lib -> "$idx: $lib" },
+                            choices = resumeData.technicalSkills.libraries,
                             commitMessage = commitMessage
                         )
                     }
@@ -274,25 +275,27 @@ class ResumeManager {
         choices: List<String>,
         commitMessage: String
     ) {
-        val index = KInquirer.promptList(
+        val items = KInquirer.promptCheckbox(
             message,
-            choices
-        ).split(":").first().toInt()
-        when(where){
+            choices,
+            minNumOfSelection = 1,
+            hint = "pick using spacebar"
+        )
+        when (where) {
             TechnicalSkillType.LANGUAGES -> {
-                resumeData.technicalSkills.languages.removeAt(index)
+                items.forEach { item -> resumeData.technicalSkills.languages.remove(item) }
             }
 
             TechnicalSkillType.FRAMEWORKS -> {
-                resumeData.technicalSkills.frameworks.removeAt(index)
+                items.forEach { item -> resumeData.technicalSkills.frameworks.remove(item) }
             }
 
             TechnicalSkillType.TECHNOLOGIES -> {
-                resumeData.technicalSkills.technologies.removeAt(index)
+                items.forEach { item -> resumeData.technicalSkills.technologies.remove(item) }
             }
 
             TechnicalSkillType.LIBRARIES -> {
-                resumeData.technicalSkills.libraries.removeAt(index)
+                items.forEach { item -> resumeData.technicalSkills.libraries.remove(item) }
             }
         }
         saveAndCommit(resumeData, git, commitMessage)
