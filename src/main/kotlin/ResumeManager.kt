@@ -11,6 +11,7 @@ import models.PersonalInfo
 import models.Project
 import models.ResumeData
 import models.SectionType
+import models.TechnicalSkillType
 import models.TechnicalSkills
 import java.io.File
 import org.eclipse.jgit.api.Git
@@ -104,6 +105,7 @@ class ResumeManager {
             SectionType.EDUCATION -> resumeData.education.addAll(collectEducation("add new education entry:"))
             SectionType.EXPERIENCE -> resumeData.experience.addAll(collectExperience("add new experience entry:"))
             SectionType.PROJECTS -> resumeData.projects.addAll(collectProjects("add new project entry:"))
+            SectionType.TECHNICAL_SKILLS -> resumeData.technicalSkills += collectTechnicalSkills("add new technical skills:")
             SectionType.CERTIFICATIONS -> resumeData.certifications.addAll(collectCertifications("add new certification entry:"))
         }
 
@@ -158,6 +160,17 @@ class ResumeManager {
                 )
             }
 
+            SectionType.TECHNICAL_SKILLS -> {
+                removeWhatFromWhere(
+                    git = git,
+                    where = section,
+                    resumeData = resumeData,
+                    message = "Select technical skill to remove:",
+                    choices = TechnicalSkillType.entries.mapIndexed { index, skillType -> "$index: ${skillType.name.lowercase()}" },
+                    commitMessage = "Remove technical skills from $targetBranch"
+                )
+            }
+
             SectionType.CERTIFICATIONS -> {
                 removeWhatFromWhere(
                     git = git,
@@ -182,27 +195,107 @@ class ResumeManager {
         val index = KInquirer.promptList(message, choices).split(":").first().toInt()
         when (where) {
             SectionType.EDUCATION -> {
-                val updated = resumeData.education.apply { removeAt(index) }
-                saveAndCommit(resumeData.copy(education = updated), git, commitMessage)
+                resumeData.education.apply { removeAt(index) }
+                saveAndCommit(resumeData, git, commitMessage)
             }
 
             SectionType.EXPERIENCE -> {
-                val updated = resumeData.experience.apply { removeAt(index) }
-                saveAndCommit(resumeData.copy(experience = updated), git, commitMessage)
+                resumeData.experience.apply { removeAt(index) }
+                saveAndCommit(resumeData, git, commitMessage)
             }
 
             SectionType.PROJECTS -> {
-                val updated = resumeData.projects.apply { removeAt(index) }
-                saveAndCommit(resumeData.copy(projects = updated), git, commitMessage)
+                resumeData.projects.apply { removeAt(index) }
+                saveAndCommit(resumeData, git, commitMessage)
+            }
+
+            SectionType.TECHNICAL_SKILLS -> {
+                when (val skillType = TechnicalSkillType.entries[index]) {
+                    TechnicalSkillType.LANGUAGES -> {
+                        removeTechnicalSkill(
+                            git = git,
+                            where = skillType,
+                            resumeData = resumeData,
+                            message = "Select language to remove:",
+                            choices = resumeData.technicalSkills.languages.mapIndexed { idx, lang -> "$idx: $lang" },
+                            commitMessage = commitMessage
+                        )
+                    }
+
+                    TechnicalSkillType.FRAMEWORKS -> {
+                        removeTechnicalSkill(
+                            git = git,
+                            where = skillType,
+                            resumeData = resumeData,
+                            message = "Select framework to remove:",
+                            choices = resumeData.technicalSkills.frameworks.mapIndexed { idx, fw -> "$idx: $fw" },
+                            commitMessage = commitMessage
+                        )
+                    }
+
+                    TechnicalSkillType.TECHNOLOGIES -> {
+                        removeTechnicalSkill(
+                            git = git,
+                            where = skillType,
+                            resumeData = resumeData,
+                            message = "Select technology to remove:",
+                            choices = resumeData.technicalSkills.technologies.mapIndexed { idx, tech -> "$idx: $tech" },
+                            commitMessage = commitMessage
+                        )
+                    }
+
+                    TechnicalSkillType.LIBRARIES -> {
+                        removeTechnicalSkill(
+                            git = git,
+                            where = skillType,
+                            resumeData = resumeData,
+                            message = "Select library to remove:",
+                            choices = resumeData.technicalSkills.libraries.mapIndexed { idx, lib -> "$idx: $lib" },
+                            commitMessage = commitMessage
+                        )
+                    }
+                }
             }
 
             SectionType.CERTIFICATIONS -> {
-                val updated = resumeData.certifications.apply { removeAt(index) }
-                saveAndCommit(resumeData.copy(certifications = updated), git, commitMessage)
+                resumeData.certifications.apply { removeAt(index) }
+                saveAndCommit(resumeData, git, commitMessage)
             }
         }
 
 
+    }
+
+    private fun removeTechnicalSkill(
+        git: Git,
+        where: TechnicalSkillType,
+        resumeData: ResumeData,
+        message: String,
+        choices: List<String>,
+        commitMessage: String
+    ) {
+        val index = KInquirer.promptList(
+            message,
+            choices
+        ).split(":").first().toInt()
+        when(where){
+            TechnicalSkillType.LANGUAGES -> {
+                resumeData.technicalSkills.languages.removeAt(index)
+            }
+
+            TechnicalSkillType.FRAMEWORKS -> {
+                resumeData.technicalSkills.frameworks.removeAt(index)
+            }
+
+            TechnicalSkillType.TECHNOLOGIES -> {
+                resumeData.technicalSkills.technologies.removeAt(index)
+            }
+
+            TechnicalSkillType.LIBRARIES -> {
+                resumeData.technicalSkills.libraries.removeAt(index)
+            }
+        }
+        saveAndCommit(resumeData, git, commitMessage)
     }
 
     private fun collectPersonalInfo(): PersonalInfo {
@@ -312,16 +405,16 @@ class ResumeManager {
 
         val languages =
             readLine("Languages (comma-separated): ").split(",").map { it.trim().escapeLatexSpecialChars() }
-                .filter { it.isNotEmpty() }
+                .filter { it.isNotEmpty() }.toMutableList()
         val frameworks =
             readLine("Frameworks (comma-separated): ").split(",").map { it.trim().escapeLatexSpecialChars() }
-                .filter { it.isNotEmpty() }
+                .filter { it.isNotEmpty() }.toMutableList()
         val developerTools =
             readLine("Technologies (comma-separated): ").split(",").map { it.trim().escapeLatexSpecialChars() }
-                .filter { it.isNotEmpty() }
+                .filter { it.isNotEmpty() }.toMutableList()
         val libraries =
             readLine("Libraries (comma-separated): ").split(",").map { it.trim().escapeLatexSpecialChars() }
-                .filter { it.isNotEmpty() }
+                .filter { it.isNotEmpty() }.toMutableList()
 
         return TechnicalSkills(languages, frameworks, developerTools, libraries)
     }
@@ -373,10 +466,10 @@ class ResumeManager {
                     experience = data.experience.filter { it.toString().isNotBlank() }.toMutableList(),
                     projects = data.projects.filter { it.toString().isNotBlank() }.toMutableList(),
                     technicalSkills = data.technicalSkills.copy(
-                        languages = data.technicalSkills.languages.filter { it.isNotBlank() },
-                        frameworks = data.technicalSkills.frameworks.filter { it.isNotBlank() },
-                        technologies = data.technicalSkills.technologies.filter { it.isNotBlank() },
-                        libraries = data.technicalSkills.libraries.filter { it.isNotBlank() }
+                        languages = data.technicalSkills.languages.filter { it.isNotBlank() }.toMutableList(),
+                        frameworks = data.technicalSkills.frameworks.filter { it.isNotBlank() }.toMutableList(),
+                        technologies = data.technicalSkills.technologies.filter { it.isNotBlank() }.toMutableList(),
+                        libraries = data.technicalSkills.libraries.filter { it.isNotBlank() }.toMutableList()
                     )
                 )
             }

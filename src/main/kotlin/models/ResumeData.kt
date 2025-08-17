@@ -7,7 +7,15 @@ enum class SectionType {
     EDUCATION,
     EXPERIENCE,
     PROJECTS,
+    TECHNICAL_SKILLS,
     CERTIFICATIONS
+}
+
+enum class TechnicalSkillType {
+    LANGUAGES,
+    FRAMEWORKS,
+    TECHNOLOGIES,
+    LIBRARIES
 }
 
 @Serializable
@@ -47,11 +55,21 @@ data class Project(
 
 @Serializable
 data class TechnicalSkills(
-    val languages: List<String> = emptyList(),
-    val frameworks: List<String> = emptyList(),
-    val technologies: List<String> = emptyList(),
-    val libraries: List<String> = emptyList()
+    val languages: MutableList<String> = emptyList(),
+    val frameworks: MutableList<String> = emptyList(),
+    val technologies: MutableList<String> = emptyList(),
+    val libraries: MutableList<String> = emptyList()
 )
+{
+    operator fun plus(other: TechnicalSkills): TechnicalSkills {
+        return TechnicalSkills(
+            languages = (languages + other.languages).distinct().toMutableList(),
+            frameworks = (frameworks + other.frameworks).distinct().toMutableList(),
+            technologies = (technologies + other.technologies).distinct().toMutableList(),
+            libraries = (libraries + other.libraries).distinct().toMutableList()
+        )
+    }
+}
 
 @Serializable
 data class Certification(
@@ -67,6 +85,6 @@ data class ResumeData(
     val education: MutableList<Education> = emptyList(),
     val experience: MutableList<Experience> = emptyList(),
     val projects: MutableList<Project> = emptyList(),
-    val technicalSkills: TechnicalSkills = TechnicalSkills(),
+    var technicalSkills: TechnicalSkills = TechnicalSkills(),
     val certifications: MutableList<Certification> = emptyList()
 )
