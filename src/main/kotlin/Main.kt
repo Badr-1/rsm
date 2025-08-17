@@ -159,31 +159,6 @@ class CompileCommand : CliktCommand(name = "compile", help = "Compile LaTeX resu
 }
 
 
-class StatusCommand : CliktCommand(name = "status", help = "Show resume repository status") {
-    override fun run() {
-        if (!GitUtils.isGitRepository()) {
-            println("❌ Not a resume repository. Run 'resume init' first.")
-            return
-        }
-
-        val currentBranch = GitUtils.getCurrentBranch()
-        val branches = GitUtils.listBranches()
-        val configExists = configFile.exists()
-        val resumeExists = resumeFile.exists()
-
-        println("📊 Resume Repository Status")
-        println("─".repeat(30))
-        println("📁 Current Branch: $currentBranch")
-        println("🌿 Available Branches:")
-        branches.forEach { branch ->
-            val marker = if (branch == currentBranch) "→" else " "
-            println("  $marker $branch")
-        }
-        println("📄 Configuration: ${if (configExists) "✅ Found" else "❌ Missing"}")
-        println("📝 Resume File: ${if (resumeExists) "✅ Found" else "❌ Missing"}")
-    }
-}
-
 fun main(args: Array<String>) = ResumeCLI()
     .subcommands(
         InitCommand(),
@@ -192,6 +167,5 @@ fun main(args: Array<String>) = ResumeCLI()
         AddCommand(),
         RemoveCommand(),
         CompileCommand(),
-        StatusCommand()
     )
     .main(args)

@@ -5,9 +5,6 @@ import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import java.io.File
 
 object GitUtils {
-    fun isGitRepository(): Boolean {
-        return File(".git").exists()
-    }
 
     fun openRepository(): Git? {
         return try {
@@ -17,15 +14,6 @@ object GitUtils {
                 .findGitDir()
                 .build()
             Git(repo)
-        } catch (e: Exception) {
-            null
-        }
-    }
-
-    fun getCurrentBranch(): String? {
-        return try {
-            val git = openRepository()
-            git?.repository?.branch
         } catch (e: Exception) {
             null
         }
@@ -42,7 +30,4 @@ object GitUtils {
         }
     }
 
-    fun branchExists(branchName: String): Boolean {
-        return listBranches().contains(branchName)
-    }
 }
