@@ -50,6 +50,7 @@ class LaTeXGenerator {
 
 %----------FONT OPTIONS----------
 % sans-serif
+\usepackage{mathptmx}  % Times New Roman font
 % \usepackage[sfdefault]{FiraSans}
 % \usepackage[sfdefault]{roboto}
 % \usepackage[sfdefault]{noto-sans}
