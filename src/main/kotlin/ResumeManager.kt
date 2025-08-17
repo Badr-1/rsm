@@ -61,16 +61,19 @@ class ResumeManager {
             git.commit().setMessage("Initial resume setup").call()
 
             println("✅ Resume initialized successfully!")
-            println("💡 Use 'resume generate' to create the LaTeX file")
-            println("💡 Use 'resume create <role>' to create a new role-specific branch")
-            println("💡 Use 'resume add/remove' to modify sections in your resume")
+            showHints()
 
         } else {
             println("📄 Resume configuration already exists.")
-            println("💡 Use 'resume create <role>' to create a new role-specific branch")
-            println("💡 Use 'resume add/remove' to modify sections in your resume")
-            println("💡 Use 'resume compile ' to compile the LaTeX file into PDF")
+            showHints()
         }
+    }
+
+    private fun showHints() {
+        println("💡 Use 'resume generate' to create the LaTeX file")
+        println("💡 Use 'resume create <role>' to create a new role-specific branch")
+        println("💡 Use 'resume add/remove' to modify sections in your resume")
+        println("💡 Use 'resume compile' to compile the LaTeX file into PDF")
     }
 
     fun createRoleBranch(roleName: String) {
@@ -398,7 +401,7 @@ class ResumeManager {
     }
 
     private fun readLine(prompt: String, default: String = ""): String {
-        return  KInquirer.promptInput(prompt, default)
+        return KInquirer.promptInput(prompt, default)
     }
 
     private fun saveAndCommit(data: ResumeData, git: Git, message: String) {
