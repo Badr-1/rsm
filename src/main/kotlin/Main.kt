@@ -6,7 +6,6 @@ import com.github.ajalt.clikt.parameters.options.option
 import com.github.kinquirer.KInquirer
 import com.github.kinquirer.components.promptList
 import models.SectionType
-import models.SectionType.*
 import utils.FileUtils
 import utils.GitUtils
 import java.io.File
@@ -40,13 +39,13 @@ class CreateRoleCommand : CliktCommand(name = "create", help = "Create a new rol
 
 class AddCommand : CliktCommand(name = "add", help = "Add content to resume") {
     override fun run() {
-        val sections = listOf(EDUCATION, EXPERIENCE, PROJECTS, CERTIFICATIONS)
+        val sections = SectionType.entries.map { it.name.replace("_"," ") }
         val targets = GitUtils.listBranches()
 
         val section = SectionType.valueOf(
             KInquirer.promptList(
                 "What section do you want to add content to?",
-                sections.map { it.name.lowercase().replaceFirstChar { c-> c.uppercase() } }).uppercase()
+                sections.map { it.lowercase().replaceFirstChar { c -> c.uppercase() } }).replace(" ","_").uppercase()
         )
         val target = KInquirer.promptList("Select the target branch for this section:", targets)
 
@@ -58,13 +57,13 @@ class AddCommand : CliktCommand(name = "add", help = "Add content to resume") {
 class RemoveCommand : CliktCommand(name = "remove", help = "Remove content from resume") {
 
     override fun run() {
-        val sections = listOf(EDUCATION, EXPERIENCE, PROJECTS, CERTIFICATIONS)
+        val sections = SectionType.entries.map { it.name.replace("_"," ") }
         val targets = GitUtils.listBranches()
 
         val section = SectionType.valueOf(
             KInquirer.promptList(
-                "What section do you want to add content to?",
-                sections.map { it.name.lowercase().replaceFirstChar { c-> c.uppercase() } }).uppercase()
+                "What section do you want to remove content from?",
+                sections.map { it.lowercase().replaceFirstChar { c -> c.uppercase() } }).replace(" ","_").uppercase()
         )
         val target = KInquirer.promptList("Select the target branch for this section:", targets)
 
