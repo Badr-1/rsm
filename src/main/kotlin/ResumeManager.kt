@@ -2,6 +2,7 @@ import com.github.kinquirer.KInquirer
 import com.github.kinquirer.components.promptCheckbox
 import com.github.kinquirer.components.promptConfirm
 import com.github.kinquirer.components.promptInput
+import com.github.kinquirer.components.promptList
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.encodeToString
 import models.Certification
@@ -103,7 +104,12 @@ class ResumeManager {
         when (section) {
             SectionType.EDUCATION -> {
                 metaData = "Added new education\n\n"
-                resumeData.education.addAll(collectEducation("add new education entry:").apply {
+                val position = KInquirer.promptList(
+                    "Select the position to add new education entry to:",
+                    resumeData.education.mapIndexed { index, education -> "$index: ${education.degree} at ${education.institution}" } + "${resumeData.education.size}: add to the end"
+                ).split(":").first().toInt()
+
+                resumeData.education.addAll(position, collectEducation("add new education entry:").apply {
                     metaData += this.joinToString(
                         prefix = "\n- ",
                         separator = "\n- "
@@ -113,7 +119,11 @@ class ResumeManager {
 
             SectionType.EXPERIENCE -> {
                 metaData = "Added new experiences\n\n"
-                resumeData.experience.addAll(collectExperience("add new experience entry:").apply {
+                val position = KInquirer.promptList(
+                    "Select the position to add new experience entry to:",
+                    resumeData.experience.mapIndexed { index, experience -> "$index: ${experience.position} at ${experience.company}" } + "${resumeData.experience.size}: add to the end"
+                ).split(":").first().toInt()
+                resumeData.experience.addAll(position, collectExperience("add new experience entry:").apply {
                     metaData += this.joinToString(
                         prefix = "\n- ",
                         separator = "\n- "
@@ -123,7 +133,11 @@ class ResumeManager {
 
             SectionType.PROJECTS -> {
                 metaData = "Added new projects\n\n"
-                resumeData.projects.addAll(collectProjects("add new project entry:").apply {
+                val position = KInquirer.promptList(
+                    "Select the position to add new project entry to:",
+                    resumeData.projects.mapIndexed { index, project -> "$index: ${project.name} (${project.date})" } + "${resumeData.projects.size}: add to the end"
+                ).split(":").first().toInt()
+                resumeData.projects.addAll(position, collectProjects("add new project entry:").apply {
                     metaData += this.joinToString(
                         prefix = "\n- ",
                         separator = "\n- "
@@ -141,7 +155,12 @@ class ResumeManager {
                         metaData += "Frameworks: ${this.frameworks.joinToString(prefix = "\n- ", separator = "\n- ")}\n"
                     }
                     if (this.technologies.isNotEmpty()) {
-                        metaData += "Technologies: ${this.technologies.joinToString(prefix = "\n- ", separator = "\n- ")}\n"
+                        metaData += "Technologies: ${
+                            this.technologies.joinToString(
+                                prefix = "\n- ",
+                                separator = "\n- "
+                            )
+                        }\n"
                     }
                     if (this.libraries.isNotEmpty()) {
                         metaData += "Libraries: ${this.libraries.joinToString(prefix = "\n- ", separator = "\n- ")}"
@@ -151,7 +170,11 @@ class ResumeManager {
 
             SectionType.CERTIFICATIONS -> {
                 metaData = "Added new certifications\n\n"
-                resumeData.certifications.addAll(collectCertifications("add new certification entry:").apply {
+                val position = KInquirer.promptList(
+                    "Select the position to add new certification entry to:",
+                    resumeData.certifications.mapIndexed { index, cert -> "$index: ${cert.name} by ${cert.issuingOrganization}" } + "${resumeData.certifications.size}: add to the end"
+                ).split(":").first().toInt()
+                resumeData.certifications.addAll(position, collectCertifications("add new certification entry:").apply {
                     metaData += this.joinToString(
                         prefix = "\n- ",
                         separator = "\n- "
