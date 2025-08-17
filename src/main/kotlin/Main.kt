@@ -39,37 +39,29 @@ class CreateRoleCommand : CliktCommand(name = "create", help = "Create a new rol
 
 class AddCommand : CliktCommand(name = "add", help = "Add content to resume") {
     override fun run() {
-        val sections = SectionType.entries.map { it.name.replace("_"," ") }
-        val targets = GitUtils.listBranches()
-
-        val section = SectionType.valueOf(
-            KInquirer.promptList(
-                "What section do you want to add content to?",
-                sections.map { it.lowercase().replaceFirstChar { c -> c.uppercase() } }).replace(" ","_").uppercase()
-        )
-        val target = KInquirer.promptList("Select the target branch for this section:", targets)
-
-        val resumeManager = ResumeManager()
-        resumeManager.addToSection(section, target)
+        val section = promptSection("What section do you want to add content to?")
+        val target = promptTargetBranch("Select the target branch to add this to:")
+        ResumeManager().addToSection(section, target)
     }
 }
 
 class RemoveCommand : CliktCommand(name = "remove", help = "Remove content from resume") {
 
     override fun run() {
-        val sections = SectionType.entries.map { it.name.replace("_"," ") }
-        val targets = GitUtils.listBranches()
-
-        val section = SectionType.valueOf(
-            KInquirer.promptList(
-                "What section do you want to remove content from?",
-                sections.map { it.lowercase().replaceFirstChar { c -> c.uppercase() } }).replace(" ","_").uppercase()
-        )
-        val target = KInquirer.promptList("Select the target branch for this section:", targets)
-
-        val resumeManager = ResumeManager()
-        resumeManager.removeFromSection(section, target)
+        val section = promptSection("What section do you want to remove content from?")
+        val target = promptTargetBranch("Select the target branch to remove this from:")
+        ResumeManager().removeFromSection(section, target)
     }
+}
+
+private fun promptSection(message: String): SectionType {
+    val sections = SectionType.entries.map { it.name.replace("_", " ") }
+    val selected = KInquirer.promptList(message, sections.map { it.lowercase().replaceFirstChar { c -> c.uppercase() } }).replace(" ","_").uppercase()
+    return SectionType.valueOf(selected.replace(" ", "_").uppercase())
+}
+
+private fun promptTargetBranch(message: String): String {
+    return KInquirer.promptList(message, GitUtils.listBranches())
 }
 
 class CompileCommand : CliktCommand(name = "compile", help = "Compile LaTeX resume to PDF") {

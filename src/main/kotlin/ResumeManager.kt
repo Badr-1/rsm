@@ -38,7 +38,7 @@ class ResumeManager {
             """.trimIndent()
             )
 
-            
+
             val personalInfo = collectPersonalInfo()
             val education = collectEducation("\n🎓 Education:")
             val experience = collectExperience("\n💼 Experience:")
@@ -54,10 +54,10 @@ class ResumeManager {
                 technicalSkills = skills,
                 certifications = certifications
             )
-            
+
             saveConfig(resumeData)
 
-            
+
             git.add().addFilepattern(".").call()
             git.commit().setMessage("Initial resume setup").call()
 
@@ -81,7 +81,7 @@ class ResumeManager {
         try {
             val git = openGitRepository()
 
-            
+
             git.checkout().setName("main").call()
             git.checkout().setCreateBranch(true).setName(roleName).call()
 
@@ -96,26 +96,71 @@ class ResumeManager {
     fun addToSection(section: SectionType, target: String?) {
         val git = openGitRepository()
         val targetBranch = target ?: getCurrentBranch(git)
-
-        
         git.checkout().setName(targetBranch).call()
 
         val resumeData = loadConfig()
+        var metaData: String
         when (section) {
-            SectionType.EDUCATION -> resumeData.education.addAll(collectEducation("add new education entry:"))
-            SectionType.EXPERIENCE -> resumeData.experience.addAll(collectExperience("add new experience entry:"))
-            SectionType.PROJECTS -> resumeData.projects.addAll(collectProjects("add new project entry:"))
-            SectionType.TECHNICAL_SKILLS -> resumeData.technicalSkills += collectTechnicalSkills("add new technical skills:")
-            SectionType.CERTIFICATIONS -> resumeData.certifications.addAll(collectCertifications("add new certification entry:"))
+            SectionType.EDUCATION -> {
+                metaData = "Added new education\n\n"
+                resumeData.education.addAll(collectEducation("add new education entry:").apply {
+                    metaData += this.joinToString(
+                        prefix = "\n- ",
+                        separator = "\n- "
+                    ) { "${it.degree} at ${it.institution}" }
+                })
+            }
+
+            SectionType.EXPERIENCE -> {
+                metaData = "Added new experiences\n\n"
+                resumeData.experience.addAll(collectExperience("add new experience entry:").apply {
+                    metaData += this.joinToString(
+                        prefix = "\n- ",
+                        separator = "\n- "
+                    ) { "${it.position} at ${it.company}" }
+                })
+            }
+
+            SectionType.PROJECTS -> {
+                metaData = "Added new projects\n\n"
+                resumeData.projects.addAll(collectProjects("add new project entry:").apply {
+                    metaData += this.joinToString(
+                        prefix = "\n- ",
+                        separator = "\n- "
+                    ) { "${it.name} (${it.date})" }
+                })
+            }
+
+            SectionType.TECHNICAL_SKILLS -> {
+                metaData = "Added new technical skills\n\n"
+                resumeData.technicalSkills += collectTechnicalSkills("add new technical skills:").apply {
+                    if (this.languages.isNotEmpty()) {
+                        metaData += "Languages: ${this.languages.joinToString(prefix = "\n- ", separator = "\n- ")}\n"
+                    }
+                    if (this.frameworks.isNotEmpty()) {
+                        metaData += "Frameworks: ${this.frameworks.joinToString(prefix = "\n- ", separator = "\n- ")}\n"
+                    }
+                    if (this.technologies.isNotEmpty()) {
+                        metaData += "Technologies: ${this.technologies.joinToString(prefix = "\n- ", separator = "\n- ")}\n"
+                    }
+                    if (this.libraries.isNotEmpty()) {
+                        metaData += "Libraries: ${this.libraries.joinToString(prefix = "\n- ", separator = "\n- ")}"
+                    }
+                }
+            }
+
+            SectionType.CERTIFICATIONS -> {
+                metaData = "Added new certifications\n\n"
+                resumeData.certifications.addAll(collectCertifications("add new certification entry:").apply {
+                    metaData += this.joinToString(
+                        prefix = "\n- ",
+                        separator = "\n- "
+                    ) { "${it.name} by ${it.issuingOrganization}" }
+                })
+            }
         }
 
-        saveConfig(resumeData)
-
-        
-        git.add().addFilepattern(".").call()
-        git.commit().setMessage("Add $section to $targetBranch").call()
-
-        println("✅ Added $section to $targetBranch branch")
+        saveAndCommit(resumeData, git, metaData)
     }
 
     fun removeFromSection(section: SectionType, target: String?) {
