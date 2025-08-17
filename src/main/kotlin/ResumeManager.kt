@@ -134,7 +134,6 @@ class ResumeManager {
                     resumeData = resumeData,
                     message = "Select education entry to remove:",
                     choices = resumeData.education.map { edu -> "${edu.degree} at ${edu.institution}" },
-                    commitMessage = "Remove education from $targetBranch"
                 )
             }
 
@@ -145,7 +144,6 @@ class ResumeManager {
                     resumeData = resumeData,
                     message = "Select experience entry to remove:",
                     choices = resumeData.experience.map { exp -> "${exp.position} at ${exp.company}" },
-                    commitMessage = "Remove experience from $targetBranch"
                 )
             }
 
@@ -156,7 +154,6 @@ class ResumeManager {
                     resumeData = resumeData,
                     message = "Select project to remove:",
                     choices = resumeData.projects.map { proj -> "${proj.name} (${proj.date})" },
-                    commitMessage = "Remove project from $targetBranch"
                 )
             }
 
@@ -167,7 +164,6 @@ class ResumeManager {
                     resumeData = resumeData,
                     message = "Select technical skill to remove:",
                     choices = TechnicalSkillType.entries.map { skillType -> skillType.name.lowercase() },
-                    commitMessage = "Remove technical skills from $targetBranch"
                 )
             }
 
@@ -178,7 +174,6 @@ class ResumeManager {
                     resumeData = resumeData,
                     message = "Select certification to remove:",
                     choices = resumeData.certifications.map { cert -> "${cert.name} by ${cert.issuingOrganization}" },
-                    commitMessage = "Remove certification from $targetBranch"
                 )
             }
         }
@@ -190,23 +185,26 @@ class ResumeManager {
         resumeData: ResumeData,
         message: String,
         choices: List<String>,
-        commitMessage: String
     ) {
         val items = KInquirer.promptCheckbox(message, choices, minNumOfSelection = 1, hint = "pick using spacebar")
+        var metadata = ""
         when (where) {
             SectionType.EDUCATION -> {
                 items.forEach { item -> resumeData.education.apply { removeIf { edu -> "${edu.degree} at ${edu.institution}" == item } } }
-                saveAndCommit(resumeData, git, commitMessage)
+                metadata += "Removed education ${items.joinToString(prefix = "\n\n- ", separator = "\n- ")}"
+                saveAndCommit(resumeData, git, metadata)
             }
 
             SectionType.EXPERIENCE -> {
                 items.forEach { item -> resumeData.experience.apply { removeIf { exp -> "${exp.position} at ${exp.company}" == item } } }
-                saveAndCommit(resumeData, git, commitMessage)
+                metadata += "Removed experience ${items.joinToString(prefix = "\n\n- ", separator = "\n- ")}"
+                saveAndCommit(resumeData, git, metadata)
             }
 
             SectionType.PROJECTS -> {
                 items.forEach { item -> resumeData.projects.apply { removeIf { proj -> "${proj.name} (${proj.date})" == item } } }
-                saveAndCommit(resumeData, git, commitMessage)
+                metadata += "Removed projects ${items.joinToString(prefix = "\n\n- ", separator = "\n- ")}"
+                saveAndCommit(resumeData, git, metadata)
             }
 
             SectionType.TECHNICAL_SKILLS -> {
@@ -219,7 +217,6 @@ class ResumeManager {
                                 resumeData = resumeData,
                                 message = "Select language to remove:",
                                 choices = resumeData.technicalSkills.languages,
-                                commitMessage = commitMessage
                             )
                         }
 
@@ -230,7 +227,6 @@ class ResumeManager {
                                 resumeData = resumeData,
                                 message = "Select framework to remove:",
                                 choices = resumeData.technicalSkills.frameworks,
-                                commitMessage = commitMessage
                             )
                         }
 
@@ -241,7 +237,6 @@ class ResumeManager {
                                 resumeData = resumeData,
                                 message = "Select technology to remove:",
                                 choices = resumeData.technicalSkills.technologies,
-                                commitMessage = commitMessage
                             )
                         }
 
@@ -252,7 +247,6 @@ class ResumeManager {
                                 resumeData = resumeData,
                                 message = "Select library to remove:",
                                 choices = resumeData.technicalSkills.libraries,
-                                commitMessage = commitMessage
                             )
                         }
                     }
@@ -261,7 +255,8 @@ class ResumeManager {
 
             SectionType.CERTIFICATIONS -> {
                 items.forEach { item -> resumeData.certifications.apply { removeIf { cert -> "${cert.name} by ${cert.issuingOrganization}" == item } } }
-                saveAndCommit(resumeData, git, commitMessage)
+                metadata += "Removed certifications ${items.joinToString(prefix = "\n\n- ", separator = "\n- ")}"
+                saveAndCommit(resumeData, git, metadata)
             }
         }
 
@@ -274,7 +269,6 @@ class ResumeManager {
         resumeData: ResumeData,
         message: String,
         choices: List<String>,
-        commitMessage: String
     ) {
         val items = KInquirer.promptCheckbox(
             message,
@@ -282,24 +276,29 @@ class ResumeManager {
             minNumOfSelection = 1,
             hint = "pick using spacebar"
         )
+        var metaData = ""
         when (where) {
             TechnicalSkillType.LANGUAGES -> {
                 items.forEach { item -> resumeData.technicalSkills.languages.remove(item) }
+                metaData += "Removed languages ${items.joinToString(prefix = "\n\n- ", separator = "\n- ")}"
             }
 
             TechnicalSkillType.FRAMEWORKS -> {
                 items.forEach { item -> resumeData.technicalSkills.frameworks.remove(item) }
+                metaData += "Removed frameworks ${items.joinToString(prefix = "\n\n- ", separator = "\n- ")}"
             }
 
             TechnicalSkillType.TECHNOLOGIES -> {
                 items.forEach { item -> resumeData.technicalSkills.technologies.remove(item) }
+                metaData += "Removed technologies ${items.joinToString(prefix = "\n\n- ", separator = "\n- ")}"
             }
 
             TechnicalSkillType.LIBRARIES -> {
                 items.forEach { item -> resumeData.technicalSkills.libraries.remove(item) }
+                metaData += "Removed libraries ${items.joinToString(prefix = "\n\n- ", separator = "\n- ")}"
             }
         }
-        saveAndCommit(resumeData, git, commitMessage)
+        saveAndCommit(resumeData, git, metaData)
     }
 
     private fun collectPersonalInfo(): PersonalInfo {
