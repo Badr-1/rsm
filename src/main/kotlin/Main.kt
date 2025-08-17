@@ -73,16 +73,22 @@ class RemoveCommand : CliktCommand(name = "remove", help = "Remove content from 
 }
 
 class CompileCommand : CliktCommand(name = "compile", help = "Compile LaTeX resume to PDF") {
+    private val generate by option("--generate", "-g", help = "Generate LaTeX file before compiling").flag(default = true)
     private val clean by option("--clean", "-c", help = "Clean auxiliary files after compilation").flag()
     private val open by option("--open", "-o", help = "Open PDF after compilation").flag()
 
     override fun run() {
+        if (generate) {
+            val resumeManager = ResumeManager()
+            resumeManager.generateLatexFile()
+        }
+
         if (!resumeFile.exists()) {
             println("❌ resume.tex not found. Run 'resume init' first.")
             return
         }
 
-        
+
         val errors = FileUtils.validateLatexFile(resumeFile)
         if (errors.isNotEmpty()) {
             println("❌ LaTeX validation errors:")
