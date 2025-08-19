@@ -16,35 +16,12 @@ A command-line tool for managing LaTeX resumes with Git branching for role-speci
 - Git
 - LaTeX distribution (for compiling to PDF)
 
-## Installation
-
-1.Clone the repository:
-```bash
-git clone <repository-url>
-cd rsm
-```
-
-2.Build the project:
-```bash
-./gradlew clean jar
-```
-
-3.Make the script executable:
-```bash
-chmod +x rsm
-```
-
-4.(Optional) Add to PATH:
-```bash
-# Add to ~/.bashrc or ~/.zshrc
-export PATH=$PATH:/path/to/rsm
-```
-
 ## Usage
 
 ### Initialize a New Resume
 
 ```bash
+# navigate to your desired directory
 rsm init
 ```
 
@@ -76,41 +53,13 @@ Each command creates a new git branch for role-specific customization.
 ### Add Content
 
 ```bash
-# Add to current branch
-rsm add experience
-rsm add education
-rsm add projects
-rsm add skills
-
-# Add to specific branch
-rsm add experience --target "software-engineer"
-rsm add projects --target main
+rsm add
 ```
 
 ### Remove Content
 
 ```bash
-# Remove from current branch
-rsm remove experience
-rsm remove projects
-
-# Remove from specific branch
-rsm remove education --target "meta/data-scientist"
-```
-
-## Project Structure
-
-```
-resume-cli/
-├── src/main/kotlin/
-│   ├── Main.kt                 # CLI entry point
-│   ├── ResumeManager.kt        # Core functionality
-│   ├── LaTeXGenerator.kt       # LaTeX file generation
-│   └── models/
-│       └── ResumeData.kt       # Data classes
-├── rsm                         # Shell script wrapper
-├── build.gradle.kts            # Build configuration
-└── README.md
+rsm remove
 ```
 
 ## Example Workflow
@@ -128,7 +77,7 @@ rsm create "senior-backend-developer"
 3.**Customize for the role**:
 ```bash
 # Switch to the role branch and add relevant experience
-rsm add experience --target "Senior Backend Developer"
+rsm add"
 ```
 
 4.**Generate PDF**:
@@ -140,6 +89,10 @@ rsm compile -c # or --clean
 rsm compile -o # or --open
 # to do both clean and open
 rsm compile -co # or --clean --open
+# to generate latex from configs before compiling
+rsm compile -g # or --generate
+# complete command to generate, compile and clear auxiliary files
+rsm compile -cgo # or --clean --generate --open
 ```
 
 ## Configuration
@@ -188,33 +141,33 @@ Based on Jake Gutierrez's resume template:
 
 ## Commands Reference
 
-| Command            | Description                 | Example                        |
-|--------------------|-----------------------------|--------------------------------|
-| `init`             | Initialize new resume       | `rsm init`                     |
-| `create <role>`    | Create role branch          | `rsm create "DevOps Engineer"` |
-| `add <section>`    | Add content to section      | `rsm add experience`           |
-| `remove <section>` | Remove content from section | `rsm remove projects`          |
-| `compile`          | Compile LaTeX to PDF        | `rsm compile`                  |
-| `status`           | Show repository status      | `rsm status`                   |
+| Command         | Description                   | Example                               |
+|-----------------|-------------------------------|---------------------------------------|
+| `init`          | Initialize new resume         | `rsm init`                            |
+| `create <role>` | Create role branch            | `rsm create senior-backend-developer` |
+| `add`           | Add content to section        | `rsm add`                             |
+| `remove`        | Remove content from section   | `rsm remove`                          |
+| `generate`      | Generate LaTeX from config    | `rsm generate`                        |    
+| `compile`       | Compile LaTeX to PDF          | `rsm compile`                         |
 
 ### Sections
 
+- `personalInfo`: Personal details
+  - `name`: Full name
+  - `phone`: Contact number
+  - `email`: Email address
+  - `linkedin`: LinkedIn profile URL
+  - `github`: GitHub profile URL
 - `education`: Academic background
 - `experience`: Work experience
 - `projects`: Personal/professional projects
 - `skills`: Technical skills and technologies
+  - `languages`
+  - `frameworks`
+  - `frameworks`
+  - `libraries`
 
-### Options
-
-- `--target <branch>`: Specify target branch (default: current branch)
-
-## Development
-
-### Building
-
-```bash
-./gradlew build
-```
+  
 
 ## Contributing
 
@@ -224,21 +177,6 @@ Based on Jake Gutierrez's resume template:
 4. Add tests if applicable
 5. Submit a pull request
 
-## Troubleshooting
-
-### Common Issues
-
-**LaTeX compilation errors**:
-```bash
-# Install LaTeX distribution
-sudo apt install texlive-full    # Ubuntu/Debian
-brew install mactex              # macOS
-```
-
-**Permission denied**:
-```bash
-chmod +x rsm
-```
 
 ## License
 
@@ -248,4 +186,5 @@ MIT License—feel free to use and modify for your needs.
 
 - LaTeX template by [Jake Gutierrez](https://github.com/jakegut/resume)
 - Built with Kotlin and Clikt for CLI functionality
+- Built with kotlin-inquirer for interactive prompts
 - Git integration via JGit library
