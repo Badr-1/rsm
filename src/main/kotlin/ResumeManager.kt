@@ -17,6 +17,7 @@ import models.TechnicalSkills
 import java.io.File
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
+import utils.Utils.toCommitMessage
 
 val configFile = File("resume-config.json")
 val resumeFile = File("resume.tex")
@@ -90,85 +91,58 @@ class ResumeManager {
         git.checkout().setName(targetBranch).call()
 
         val resumeData = loadConfig()
-        var metaData: String
+        var metaData= ""
         when (section) {
             SectionType.EDUCATION -> {
-                metaData = "Added new education\n\n"
                 val position = KInquirer.promptList(
                     "Select the position to add new education entry to:",
-                    resumeData.education.mapIndexed { index, education -> "$index: ${education.degree} at ${education.institution}" } + "${resumeData.education.size}: add to the end"
+                    resumeData.education.mapIndexed { index, education -> "$index: $education" } + "${resumeData.education.size}: add to the end"
                 ).split(":").first().toInt()
 
                 resumeData.education.addAll(position, collectEducation("add new education entry:").apply {
-                    metaData += this.joinToString(
-                        prefix = "\n- ",
-                        separator = "\n- "
-                    ) { "${it.degree} at ${it.institution}" }
+                    metaData += this.toCommitMessage("Added new education\n\n")
                 })
             }
 
             SectionType.EXPERIENCE -> {
-                metaData = "Added new experiences\n\n"
                 val position = KInquirer.promptList(
                     "Select the position to add new experience entry to:",
-                    resumeData.experience.mapIndexed { index, experience -> "$index: ${experience.position} at ${experience.company}" } + "${resumeData.experience.size}: add to the end"
+                    resumeData.experience.mapIndexed { index, experience -> "$index: $experience" } + "${resumeData.experience.size}: add to the end"
                 ).split(":").first().toInt()
+
                 resumeData.experience.addAll(position, collectExperience("add new experience entry:").apply {
-                    metaData += this.joinToString(
-                        prefix = "\n- ",
-                        separator = "\n- "
-                    ) { "${it.position} at ${it.company}" }
+                    metaData += this.toCommitMessage("Added new experiences\n\n")
                 })
             }
 
             SectionType.PROJECTS -> {
-                metaData = "Added new projects\n\n"
+                metaData = "\n\n"
                 val position = KInquirer.promptList(
                     "Select the position to add new project entry to:",
-                    resumeData.projects.mapIndexed { index, project -> "$index: ${project.name} (${project.date})" } + "${resumeData.projects.size}: add to the end"
+                    resumeData.projects.mapIndexed { index, project -> "$index: $project" } + "${resumeData.projects.size}: add to the end"
                 ).split(":").first().toInt()
                 resumeData.projects.addAll(position, collectProjects("add new project entry:").apply {
-                    metaData += this.joinToString(
-                        prefix = "\n- ",
-                        separator = "\n- "
-                    ) { "${it.name} (${it.date})" }
+                    metaData += this.toCommitMessage("Added new projects\n\n")
                 })
             }
 
             SectionType.TECHNICAL_SKILLS -> {
                 metaData = "Added new technical skills\n\n"
                 resumeData.technicalSkills += collectTechnicalSkills("add new technical skills:").apply {
-                    if (this.languages.isNotEmpty()) {
-                        metaData += "Languages: ${this.languages.joinToString(prefix = "\n- ", separator = "\n- ")}\n"
-                    }
-                    if (this.frameworks.isNotEmpty()) {
-                        metaData += "Frameworks: ${this.frameworks.joinToString(prefix = "\n- ", separator = "\n- ")}\n"
-                    }
-                    if (this.technologies.isNotEmpty()) {
-                        metaData += "Technologies: ${
-                            this.technologies.joinToString(
-                                prefix = "\n- ",
-                                separator = "\n- "
-                            )
-                        }\n"
-                    }
-                    if (this.libraries.isNotEmpty()) {
-                        metaData += "Libraries: ${this.libraries.joinToString(prefix = "\n- ", separator = "\n- ")}"
-                    }
+                    metaData += languages.toCommitMessage("Languages") +
+                            frameworks.toCommitMessage("Frameworks") +
+                            technologies.toCommitMessage("Technologies") +
+                            libraries.toCommitMessage("Libraries")
                 }
             }
 
             SectionType.CERTIFICATIONS -> {
-                metaData = "Added new certifications\n\n"
                 val position = KInquirer.promptList(
                     "Select the position to add new certification entry to:",
-                    resumeData.certifications.mapIndexed { index, cert -> "$index: ${cert.name} by ${cert.issuingOrganization}" } + "${resumeData.certifications.size}: add to the end"
+                    resumeData.certifications.mapIndexed { index, certification -> "$index: $certification" } + "${resumeData.certifications.size}: add to the end"
                 ).split(":").first().toInt()
                 resumeData.certifications.addAll(position, collectCertifications("add new certification entry:").apply {
-                    metaData += this.joinToString(
-                        prefix = "\n- ",
-                        separator = "\n- "
-                    ) { "${it.name} by ${it.issuingOrganization}" }
+                    metaData += this.toCommitMessage("Added new certifications\n\n")
                 })
             }
         }
@@ -192,7 +166,7 @@ class ResumeManager {
                     where = section,
                     resumeData = resumeData,
                     message = "Select education entry to remove:",
-                    choices = resumeData.education.map { edu -> "${edu.degree} at ${edu.institution}" },
+                    choices = resumeData.education.map { education -> education.toString() },
                 )
             }
 
@@ -202,7 +176,7 @@ class ResumeManager {
                     where = section,
                     resumeData = resumeData,
                     message = "Select experience entry to remove:",
-                    choices = resumeData.experience.map { exp -> "${exp.position} at ${exp.company}" },
+                    choices = resumeData.experience.map { experience -> experience.toString() },
                 )
             }
 
@@ -212,7 +186,7 @@ class ResumeManager {
                     where = section,
                     resumeData = resumeData,
                     message = "Select project to remove:",
-                    choices = resumeData.projects.map { proj -> "${proj.name} (${proj.date})" },
+                    choices = resumeData.projects.map { project -> project.toString() },
                 )
             }
 
@@ -232,7 +206,7 @@ class ResumeManager {
                     where = section,
                     resumeData = resumeData,
                     message = "Select certification to remove:",
-                    choices = resumeData.certifications.map { cert -> "${cert.name} by ${cert.issuingOrganization}" },
+                    choices = resumeData.certifications.map { certification -> certification.toString() },
                 )
             }
         }
@@ -246,29 +220,29 @@ class ResumeManager {
         message: String,
         choices: List<String>,
     ) {
-        val items = KInquirer.promptCheckbox(message, choices, minNumOfSelection = 1, hint = "pick using spacebar")
+        val removedItems = KInquirer.promptCheckbox(message, choices, minNumOfSelection = 1, hint = "pick using spacebar")
         var metadata = ""
         when (where) {
             SectionType.EDUCATION -> {
-                items.forEach { item -> resumeData.education.apply { removeIf { edu -> "${edu.degree} at ${edu.institution}" == item } } }
-                metadata += "Removed education ${items.joinToString(prefix = "\n\n- ", separator = "\n- ")}"
+                resumeData.education.removeIf { it.toString() in removedItems }
+                metadata += removedItems.toCommitMessage("Removed education\n\n")
                 saveAndCommit(resumeData, git, metadata)
             }
 
             SectionType.EXPERIENCE -> {
-                items.forEach { item -> resumeData.experience.apply { removeIf { exp -> "${exp.position} at ${exp.company}" == item } } }
-                metadata += "Removed experience ${items.joinToString(prefix = "\n\n- ", separator = "\n- ")}"
+                resumeData.experience.removeIf { it.toString() in removedItems }
+                metadata += removedItems.toCommitMessage("Removed experience\n\n")
                 saveAndCommit(resumeData, git, metadata)
             }
 
             SectionType.PROJECTS -> {
-                items.forEach { item -> resumeData.projects.apply { removeIf { proj -> "${proj.name} (${proj.date})" == item } } }
-                metadata += "Removed projects ${items.joinToString(prefix = "\n\n- ", separator = "\n- ")}"
+                resumeData.projects.removeIf { it.toString() in removedItems }
+                metadata += removedItems.toCommitMessage("Removed projects\n\n")
                 saveAndCommit(resumeData, git, metadata)
             }
 
             SectionType.TECHNICAL_SKILLS -> {
-                items.forEach { item ->
+                removedItems.forEach { item ->
                     when (val skillType = TechnicalSkillType.valueOf(item.uppercase())) {
                         TechnicalSkillType.LANGUAGES -> {
                             removeTechnicalSkill(
@@ -314,8 +288,8 @@ class ResumeManager {
             }
 
             SectionType.CERTIFICATIONS -> {
-                items.forEach { item -> resumeData.certifications.apply { removeIf { cert -> "${cert.name} by ${cert.issuingOrganization}" == item } } }
-                metadata += "Removed certifications ${items.joinToString(prefix = "\n\n- ", separator = "\n- ")}"
+                resumeData.certifications.removeIf { it.toString() in removedItems }
+                metadata += removedItems.toCommitMessage("Removed certifications\n\n")
                 saveAndCommit(resumeData, git, metadata)
             }
         }
@@ -330,7 +304,7 @@ class ResumeManager {
         message: String,
         choices: List<String>,
     ) {
-        val items = KInquirer.promptCheckbox(
+        val removedSkills = KInquirer.promptCheckbox(
             message,
             choices,
             minNumOfSelection = 1,
@@ -339,23 +313,23 @@ class ResumeManager {
         var metaData = ""
         when (where) {
             TechnicalSkillType.LANGUAGES -> {
-                items.forEach { item -> resumeData.technicalSkills.languages.remove(item) }
-                metaData += "Removed languages ${items.joinToString(prefix = "\n\n- ", separator = "\n- ")}"
+                resumeData.technicalSkills.languages.removeIf { it in removedSkills }
+                metaData += removedSkills.toCommitMessage("Removed languages\n\n")
             }
 
             TechnicalSkillType.FRAMEWORKS -> {
-                items.forEach { item -> resumeData.technicalSkills.frameworks.remove(item) }
-                metaData += "Removed frameworks ${items.joinToString(prefix = "\n\n- ", separator = "\n- ")}"
+                resumeData.technicalSkills.frameworks.removeIf { it in removedSkills }
+                metaData += removedSkills.toCommitMessage("Removed frameworks\n\n")
             }
 
             TechnicalSkillType.TECHNOLOGIES -> {
-                items.forEach { item -> resumeData.technicalSkills.technologies.remove(item) }
-                metaData += "Removed technologies ${items.joinToString(prefix = "\n\n- ", separator = "\n- ")}"
+                resumeData.technicalSkills.technologies.removeIf { it in removedSkills }
+                metaData += removedSkills.toCommitMessage("Removed technologies\n\n")
             }
 
             TechnicalSkillType.LIBRARIES -> {
-                items.forEach { item -> resumeData.technicalSkills.libraries.remove(item) }
-                metaData += "Removed libraries ${items.joinToString(prefix = "\n\n- ", separator = "\n- ")}"
+                resumeData.technicalSkills.libraries.removeIf { it in removedSkills }
+                metaData += removedSkills.toCommitMessage("Removed libraries\n\n")
             }
         }
         saveAndCommit(resumeData, git, metaData)

@@ -34,7 +34,11 @@ data class Education(
     val location: String = "",
     val graduationDate: String = "",
     val gpa: String = "",
-)
+) {
+    override fun toString(): String {
+        return "$degree at $institution"
+    }
+}
 
 @Serializable
 data class Experience(
@@ -43,7 +47,11 @@ data class Experience(
     val location: String = "",
     val date: String = "",
     val bullets: List<String> = emptyList()
-)
+) {
+    override fun toString(): String {
+        return "$position at $company (${date})"
+    }
+}
 
 @Serializable
 data class Project(
@@ -51,7 +59,11 @@ data class Project(
     val technologies: String = "",
     val date: String = "",
     val bullets: List<String> = emptyList()
-)
+) {
+    override fun toString(): String {
+        return "$name (${date})"
+    }
+}
 
 @Serializable
 data class TechnicalSkills(
@@ -76,7 +88,11 @@ data class Certification(
     val name: String = "",
     val issuingOrganization: String = "",
     val issueDate: String = "",
-)
+) {
+    override fun toString(): String {
+        return "$name by $issuingOrganization ($issueDate)"
+    }
+}
 
 
 @Serializable
