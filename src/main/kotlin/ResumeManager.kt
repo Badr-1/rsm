@@ -69,6 +69,7 @@ class ResumeManager {
             println("📄 Resume configuration already exists.")
         }
     }
+
     fun createRoleBranch(roleName: String) {
         try {
             val git = openGitRepository()
@@ -91,7 +92,7 @@ class ResumeManager {
         git.checkout().setName(targetBranch).call()
 
         val resumeData = loadConfig()
-        var metaData= ""
+        var metaData = ""
         when (section) {
             SectionType.EDUCATION -> {
                 val position = KInquirer.promptList(
@@ -226,27 +227,24 @@ class ResumeManager {
             SectionType.EDUCATION -> {
                 resumeData.education.removeIf { it.toString() in removedItems }
                 metadata += removedItems.toCommitMessage("Removed education\n\n")
-                saveAndCommit(resumeData, git, metadata)
             }
 
             SectionType.EXPERIENCE -> {
                 resumeData.experience.removeIf { it.toString() in removedItems }
                 metadata += removedItems.toCommitMessage("Removed experience\n\n")
-                saveAndCommit(resumeData, git, metadata)
             }
 
             SectionType.PROJECTS -> {
                 resumeData.projects.removeIf { it.toString() in removedItems }
                 metadata += removedItems.toCommitMessage("Removed projects\n\n")
-                saveAndCommit(resumeData, git, metadata)
             }
 
             SectionType.TECHNICAL_SKILLS -> {
+                metadata += "Removed technical skills\n\n"
                 removedItems.forEach { item ->
                     when (val skillType = TechnicalSkillType.valueOf(item.uppercase())) {
                         TechnicalSkillType.LANGUAGES -> {
-                            removeTechnicalSkill(
-                                git = git,
+                            metadata += removeTechnicalSkill(
                                 where = skillType,
                                 resumeData = resumeData,
                                 message = "Select language to remove:",
@@ -255,8 +253,7 @@ class ResumeManager {
                         }
 
                         TechnicalSkillType.FRAMEWORKS -> {
-                            removeTechnicalSkill(
-                                git = git,
+                            metadata += removeTechnicalSkill(
                                 where = skillType,
                                 resumeData = resumeData,
                                 message = "Select framework to remove:",
@@ -265,8 +262,7 @@ class ResumeManager {
                         }
 
                         TechnicalSkillType.TECHNOLOGIES -> {
-                            removeTechnicalSkill(
-                                git = git,
+                            metadata += removeTechnicalSkill(
                                 where = skillType,
                                 resumeData = resumeData,
                                 message = "Select technology to remove:",
@@ -275,8 +271,7 @@ class ResumeManager {
                         }
 
                         TechnicalSkillType.LIBRARIES -> {
-                            removeTechnicalSkill(
-                                git = git,
+                            metadata += removeTechnicalSkill(
                                 where = skillType,
                                 resumeData = resumeData,
                                 message = "Select library to remove:",
@@ -290,49 +285,45 @@ class ResumeManager {
             SectionType.CERTIFICATIONS -> {
                 resumeData.certifications.removeIf { it.toString() in removedItems }
                 metadata += removedItems.toCommitMessage("Removed certifications\n\n")
-                saveAndCommit(resumeData, git, metadata)
             }
         }
-
-
+        saveAndCommit(resumeData, git, metadata)
     }
 
     private fun removeTechnicalSkill(
-        git: Git,
         where: TechnicalSkillType,
         resumeData: ResumeData,
         message: String,
         choices: List<String>,
-    ) {
+    ): String {
         val removedSkills = KInquirer.promptCheckbox(
             message,
             choices,
-            minNumOfSelection = 1,
             hint = "pick using spacebar"
         )
         var metaData = ""
         when (where) {
             TechnicalSkillType.LANGUAGES -> {
                 resumeData.technicalSkills.languages.removeIf { it in removedSkills }
-                metaData += removedSkills.toCommitMessage("Removed languages\n\n")
+                metaData += removedSkills.toCommitMessage("Removed languages")
             }
 
             TechnicalSkillType.FRAMEWORKS -> {
                 resumeData.technicalSkills.frameworks.removeIf { it in removedSkills }
-                metaData += removedSkills.toCommitMessage("Removed frameworks\n\n")
+                metaData += removedSkills.toCommitMessage("Removed frameworks")
             }
 
             TechnicalSkillType.TECHNOLOGIES -> {
                 resumeData.technicalSkills.technologies.removeIf { it in removedSkills }
-                metaData += removedSkills.toCommitMessage("Removed technologies\n\n")
+                metaData += removedSkills.toCommitMessage("Removed technologies")
             }
 
             TechnicalSkillType.LIBRARIES -> {
                 resumeData.technicalSkills.libraries.removeIf { it in removedSkills }
-                metaData += removedSkills.toCommitMessage("Removed libraries\n\n")
+                metaData += removedSkills.toCommitMessage("Removed libraries")
             }
         }
-        saveAndCommit(resumeData, git, metaData)
+        return metaData
     }
 
     private fun collectPersonalInfo(): PersonalInfo {
@@ -488,7 +479,6 @@ class ResumeManager {
             println("❌ No configuration found. Please run 'resume init' first.")
         }
     }
-
 
     private fun saveConfig(data: ResumeData) {
         val json = json.encodeToString(data)
