@@ -11,7 +11,9 @@ import utils.GitUtils
 import java.awt.Desktop
 import java.io.File
 
-class ResumeCLI : CliktCommand(name = "resume") {
+val rsm = ResumeCLI()
+
+class ResumeCLI : CliktCommand(name = "rsm") {
     override fun run() = Unit
 }
 
@@ -19,6 +21,7 @@ class InitCommand : CliktCommand(name = "init", help = "Initialize a new resume 
     override fun run() {
         val resumeManager = ResumeManager()
         resumeManager.initializeResume()
+        rsm.echoFormattedHelp()
     }
 }
 
@@ -150,7 +153,7 @@ class CompileCommand : CliktCommand(name = "compile", help = "Compile LaTeX resu
 }
 
 
-fun main(args: Array<String>) = ResumeCLI()
+fun main(args: Array<String>) = rsm
     .subcommands(
         InitCommand(),
         GenerateCommand(),

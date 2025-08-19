@@ -63,21 +63,11 @@ class ResumeManager {
             git.commit().setMessage("Initial resume setup").call()
 
             println("✅ Resume initialized successfully!")
-            showHints()
 
         } else {
             println("📄 Resume configuration already exists.")
-            showHints()
         }
     }
-
-    private fun showHints() {
-        println("💡 Use 'resume generate' to create the LaTeX file")
-        println("💡 Use 'resume create <role>' to create a new role-specific branch")
-        println("💡 Use 'resume add/remove' to modify sections in your resume")
-        println("💡 Use 'resume compile' to compile the LaTeX file into PDF")
-    }
-
     fun createRoleBranch(roleName: String) {
         try {
             val git = openGitRepository()
@@ -87,7 +77,6 @@ class ResumeManager {
             git.checkout().setCreateBranch(true).setName(roleName).call()
 
             println("✅ Created branch '$roleName' for role-specific customization")
-            println("💡 Use 'resume add/remove --target $roleName' to modify this version")
 
         } catch (e: Exception) {
             println("❌ Error creating branch: ${e.message}")
