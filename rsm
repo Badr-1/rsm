@@ -1,5 +1,0 @@
-#!/bin/bash
-
-jarPath=
-
-java --enable-native-access=ALL-UNNAMED -jar $jarPath "$@"
