@@ -16,6 +16,7 @@ import models.TechnicalSkillType
 import models.TechnicalSkills
 import java.io.File
 import org.eclipse.jgit.api.Git
+import org.eclipse.jgit.api.errors.EmptyCommitException
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import utils.Utils.toCommitMessage
 
@@ -527,7 +528,12 @@ class ResumeManager {
     private fun saveAndCommit(data: ResumeData, git: Git, message: String) {
         saveConfig(data)
         git.add().addFilepattern(".").call()
-        git.commit().setMessage(message).call()
+        try {
+            git.commit().setAllowEmpty(false).setMessage(message).call()
+        } catch (_: EmptyCommitException) {
+            println("❌ No changes to commit.")
+            return
+        }
         println("✅ $message")
     }
 
