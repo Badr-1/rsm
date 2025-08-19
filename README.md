@@ -34,18 +34,19 @@ This will:
 
 ### Create Role-Specific Versions
 
-To create a new role-specific résumé, use the `create` command:
+To create a new role-specific résumé, use the `role` command:
 Note: the role name should be following git branch naming conventions (e.g., no spaces, special characters).
 ```bash
-rsm create "software-engineer"
-rsm create "frontend-developer"
-rsm create "data-scientist"
+rsm role "software-engineer"
+rsm role "frontend-developer"
+rsm role "data-scientist"
 ```
 
 to further customize your résumé for specific companies, you can use nested branches:
 ```bash
-rsm create "google/software-engineer"
-rsm create "meta/data-scientist"
+rsm role "google/software-engineer"
+rsm role "meta/data-scientist"
+rsm role "meta/data-scientist"
 ```
 
 Each command creates a new git branch for role-specific customization.
@@ -71,7 +72,7 @@ rsm init
 
 2.**Create a role-specific version**:
 ```bash
-rsm create "senior-backend-developer"
+rsm role "senior-backend-developer"
 ```
 
 3.**Customize for the role**:
@@ -141,14 +142,14 @@ Based on Jake Gutierrez's resume template:
 
 ## Commands Reference
 
-| Command         | Description                   | Example                               |
-|-----------------|-------------------------------|---------------------------------------|
-| `init`          | Initialize new resume         | `rsm init`                            |
-| `create <role>` | Create role branch            | `rsm create senior-backend-developer` |
-| `add`           | Add content to section        | `rsm add`                             |
-| `remove`        | Remove content from section   | `rsm remove`                          |
-| `generate`      | Generate LaTeX from config    | `rsm generate`                        |    
-| `compile`       | Compile LaTeX to PDF          | `rsm compile`                         |
+| Command            | Description                   | Example                             |
+|--------------------|-------------------------------|-------------------------------------|
+| `init`             | Initialize new resume         | `rsm init`                          |
+| `role <role-name>` | Create role branch            | `rsm role senior-backend-developer` |
+| `add`              | Add content to section        | `rsm add`                           |
+| `remove`           | Remove content from section   | `rsm remove`                        |
+| `generate`         | Generate LaTeX from config    | `rsm generate`                      |    
+| `compile`          | Compile LaTeX to PDF          | `rsm compile`                       |
 
 ### Sections
 

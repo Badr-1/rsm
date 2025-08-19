@@ -32,7 +32,7 @@ class GenerateCommand : CliktCommand(name = "generate", help = "Generate LaTeX r
     }
 }
 
-class CreateRoleCommand : CliktCommand(name = "create", help = "Create a new role-specific branch") {
+class RoleCommand : CliktCommand(name = "role", help = "Create a new role-specific branch") {
     private val roleName by argument(help = "Name of the role/position")
 
     override fun run() {
@@ -157,7 +157,7 @@ fun main(args: Array<String>) = rsm
     .subcommands(
         InitCommand(),
         GenerateCommand(),
-        CreateRoleCommand(),
+        RoleCommand(),
         AddCommand(),
         RemoveCommand(),
         CompileCommand(),
