@@ -77,6 +77,7 @@ class ResumeManager {
             git.checkout().setCreateBranch(true).setName(roleName).call()
 
             println("✅ Created branch '$roleName' for role-specific customization")
+            git.checkout().setName("main").call()
 
         } catch (e: Exception) {
             println("❌ Error creating branch: ${e.message}")
@@ -173,6 +174,7 @@ class ResumeManager {
         }
 
         saveAndCommit(resumeData, git, metaData)
+        git.checkout().setName("main").call()
     }
 
     fun removeFromSection(section: SectionType, target: String?) {
@@ -234,6 +236,7 @@ class ResumeManager {
                 )
             }
         }
+        git.checkout().setName("main").call()
     }
 
     private fun removeWhatFromWhere(
