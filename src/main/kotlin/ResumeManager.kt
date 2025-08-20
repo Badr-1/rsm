@@ -436,16 +436,16 @@ class ResumeManager {
         println(prompt)
 
         val languages =
-            readLineRequired("Languages (comma-separated): ").split(",").map { it.trim() }
+            readLineOptional("Languages (comma-separated): ").split(",").map { it.trim() }
                 .filter { it.isNotEmpty() }.toMutableList()
         val frameworks =
-            readLineRequired("Frameworks (comma-separated): ").split(",").map { it.trim() }
+            readLineOptional("Frameworks (comma-separated): ").split(",").map { it.trim() }
                 .filter { it.isNotEmpty() }.toMutableList()
         val developerTools =
-            readLineRequired("Technologies (comma-separated): ").split(",").map { it.trim() }
+            readLineOptional("Technologies (comma-separated): ").split(",").map { it.trim() }
                 .filter { it.isNotEmpty() }.toMutableList()
         val libraries =
-            readLineRequired("Libraries (comma-separated): ").split(",").map { it.trim() }
+            readLineOptional("Libraries (comma-separated): ").split(",").map { it.trim() }
                 .filter { it.isNotEmpty() }.toMutableList()
 
         return TechnicalSkills(languages, frameworks, developerTools, libraries)
