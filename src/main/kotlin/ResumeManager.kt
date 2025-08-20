@@ -45,20 +45,22 @@ class ResumeManager {
 
 
             val personalInfo = collectPersonalInfo()
-            val education = collectEducation("\n🎓 Education:")
-            val experience = collectExperience("\n💼 Experience:")
-            val projects = collectProjects("\n🚀 Projects:")
-            val skills = collectTechnicalSkills("\n🔧 Technical Skills:")
-            val certifications = collectCertifications("\n🏆 Certifications:")
+            val sectionsToFill = KInquirer.promptCheckbox(
+                message = "choose sections you want to fill",
+                choices = SectionType.entries.map { it.name.replace("_", " ") })
+                .map { SectionType.valueOf(it.replace(" ", "_").uppercase()) }
 
-            val resumeData = ResumeData(
-                personalInfo = personalInfo,
-                education = education,
-                experience = experience,
-                projects = projects,
-                technicalSkills = skills,
-                certifications = certifications
-            )
+            val resumeData = ResumeData(personalInfo)
+
+            sectionsToFill.forEach { sectionToFill ->
+                when (sectionToFill) {
+                    SectionType.EDUCATION -> resumeData.education = collectEducation("\n🎓 Education:")
+                    SectionType.EXPERIENCE -> resumeData.experience = collectExperience("\n💼 Experience:")
+                    SectionType.PROJECTS -> resumeData.projects = collectProjects("\n🚀 Projects:")
+                    SectionType.TECHNICAL_SKILLS -> resumeData.technicalSkills = collectTechnicalSkills("\n🔧 Technical Skills:")
+                    SectionType.CERTIFICATIONS -> resumeData.certifications = collectCertifications("\n🏆 Certifications:")
+                }
+            }
 
             saveConfig(resumeData)
 

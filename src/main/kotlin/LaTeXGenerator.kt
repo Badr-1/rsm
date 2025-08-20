@@ -138,19 +138,14 @@ class LaTeXGenerator {
     }
 
     private fun generatePersonalInfo(info: PersonalInfo): String {
-        return """
-% \begin{tabular*}{\textwidth}{l@{\extracolsep{\fill}}r}
-%   \textbf{\href{http://sourabhbajaj.com/}{\Large Sourabh Bajaj}} & Email : \href{mailto:sourabh@sourabhbajaj.com}{sourabh@sourabhbajaj.com}\\
-%   \href{http://sourabhbajaj.com/}{http://www.sourabhbajaj.com} & Mobile : +1-123-456-7890 \\
-% \end{tabular*}
-
-\begin{center}
-    \textbf{\Huge \scshape ${info.name}} \\ \vspace{1pt}
-    \small ${info.phone} $|$ \href{mailto:${info.email}}{\underline{${info.email}}} $|$ 
-    \href{${info.linkedin}}{\underline{${extractUsernameFromUrl(info.linkedin)}}} $|$
-    \href{${info.github}}{\underline{${extractUsernameFromUrl(info.github)}}}
-\end{center}
-        """.trimIndent()
+        return buildString {
+            appendLine("\\begin{center}")
+            appendLine("\\textbf{\\Huge \\scshape ${info.name}} \\\\ \\vspace{1pt}")
+            append("\\small ${info.phone} $|$ \\href{mailto:${info.email}}{\\underline{${info.email}}}")
+            if (info.linkedin.isNotEmpty()) append("$|$ \\href{${info.linkedin}}{\\underline{${extractUsernameFromUrl(info.linkedin)}}}")
+            if (info.github.isNotEmpty()) appendLine("$|$ \\href{${info.github}}{\\underline{${extractUsernameFromUrl(info.github)}}}")
+            appendLine("\\end{center}")
+        }
     }
 
     private fun generateEducation(education: List<Education>): String {
@@ -223,6 +218,8 @@ class LaTeXGenerator {
     }
 
     private fun generateTechnicalSkills(skills: TechnicalSkills): String {
+        if(skills.technologies.isEmpty() && skills.frameworks.isEmpty() && skills.languages.isEmpty() && skills.libraries.isEmpty())
+            return ""
         return buildString {
             appendLine("%-----------PROGRAMMING SKILLS-----------")
             appendLine("\\section{Technical Skills}")
