@@ -37,8 +37,9 @@ class ResumeManager {
             ignoreFile.writeText(
                 """
             # Ignore generated files
-            *.tex
-            *.pdf
+            *
+            !.gitignore
+            !${configFile.name}
             """.trimIndent()
             )
 
