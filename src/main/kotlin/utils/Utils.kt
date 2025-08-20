@@ -35,8 +35,8 @@ object Utils {
             .escapeLatexSpecialChars()
     }
 
-    fun readLineOptional(prompt: String): String {
-        return KInquirer.promptInput(message = prompt, hint = "(optional)").escapeLatexSpecialChars()
+    fun readLineOptional(prompt: String, default: String = ""): String {
+        return KInquirer.promptInput(message = prompt, hint = "(optional)", default = default).escapeLatexSpecialChars()
     }
 
 }

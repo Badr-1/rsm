@@ -16,8 +16,6 @@ import java.io.File
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.errors.EmptyCommitException
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
-import utils.Utils.readLineOptional
-import utils.Utils.readLineRequired
 import utils.Utils.toCommitMessage
 
 val configFile = File("resume-config.json")
@@ -43,16 +41,16 @@ class ResumeManager {
             )
 
 
-            val personalInfo = collectPersonalInfo()
             val sectionsToFill = KInquirer.promptCheckbox(
                 message = "choose sections you want to fill",
                 choices = SectionType.entries.map { it.name.replace("_", " ") })
                 .map { SectionType.valueOf(it.replace(" ", "_").uppercase()) }
 
-            val resumeData = ResumeData(personalInfo)
+            val resumeData = ResumeData()
 
             sectionsToFill.forEach { sectionToFill ->
                 when (sectionToFill) {
+                    SectionType.PERSONAL_INFO -> resumeData.personalInfo = PersonalInfo.collect()
                     SectionType.EDUCATION -> resumeData.education = Education.collect("\n🎓 Education:")
                     SectionType.EXPERIENCE -> resumeData.experience = Experience.collect("\n💼 Experience:")
                     SectionType.PROJECTS -> resumeData.projects = Project.collect("\n🚀 Projects:")
@@ -99,6 +97,11 @@ class ResumeManager {
 
         val resumeData = loadConfig()
         when (section) {
+            SectionType.PERSONAL_INFO -> {
+                resumeData.personalInfo.update()
+                saveAndCommit(resumeData, git, "Update Personal Information")
+            }
+
             SectionType.EDUCATION -> updateWhatAtWhere(
                 git,
                 section,
@@ -151,6 +154,8 @@ class ResumeManager {
             KInquirer.promptCheckbox(message, choices, hint = "pick using spacebar")
         var metaData = ""
         when (where) {
+            SectionType.PERSONAL_INFO -> {/*handled earlier*/}
+
             SectionType.EDUCATION -> {
                 metaData += "Updated education\n\n"
                 resumeData.education.filter { it.toString() in itemsToUpdate }.forEach { metaData += it.update() }
@@ -187,6 +192,8 @@ class ResumeManager {
         val resumeData = loadConfig()
         var metaData = ""
         when (section) {
+            SectionType.PERSONAL_INFO -> {/*can't add to this section*/}
+
             SectionType.EDUCATION -> {
                 val position = KInquirer.promptList(
                     "Select the position to add new education entry to:",
@@ -254,6 +261,8 @@ class ResumeManager {
         val resumeData = loadConfig()
 
         when (section) {
+            SectionType.PERSONAL_INFO -> {/*should not remove from this section*/}
+
             SectionType.EDUCATION -> {
                 removeWhatFromWhere(
                     git = git,
@@ -318,6 +327,8 @@ class ResumeManager {
             KInquirer.promptCheckbox(message, choices, minNumOfSelection = 1, hint = "pick using spacebar")
         var metadata = ""
         when (where) {
+            SectionType.PERSONAL_INFO -> {/*handled earlier*/}
+
             SectionType.EDUCATION -> {
                 resumeData.education.removeIf { it.toString() in removedItems }
                 metadata += removedItems.toCommitMessage("Removed education\n\n")
@@ -344,17 +355,6 @@ class ResumeManager {
             }
         }
         saveAndCommit(resumeData, git, metadata)
-    }
-
-    private fun collectPersonalInfo(): PersonalInfo {
-        println("\n👤 Personal Information:")
-        val name = readLineRequired("Full Name: ")
-        val phone = readLineRequired("Phone Number: ")
-        val email = readLineRequired("Email: ")
-        val linkedin = readLineOptional("LinkedIn URL: ")
-        val github = readLineOptional("GitHub URL: ")
-
-        return PersonalInfo(name, phone, email, linkedin, github)
     }
 
 

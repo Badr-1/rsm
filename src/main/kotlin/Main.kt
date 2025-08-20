@@ -43,7 +43,9 @@ class RoleCommand : CliktCommand(name = "role", help = "Create a new role-specif
 
 class AddCommand : CliktCommand(name = "add", help = "Add content to resume") {
     override fun run() {
-        val section = promptSection("What section do you want to add content to?")
+        val section = promptSection(
+            "What section do you want to add content to?",
+            SectionType.entries.subList(1, SectionType.entries.size - 1).map { it.name.replace("_", " ") })
         val target = promptTargetBranch("Select the target branch to add this to:")
         ResumeManager().addToSection(section, target)
     }
@@ -52,7 +54,9 @@ class AddCommand : CliktCommand(name = "add", help = "Add content to resume") {
 class RemoveCommand : CliktCommand(name = "remove", help = "Remove content from resume") {
 
     override fun run() {
-        val section = promptSection("What section do you want to remove content from?")
+        val section = promptSection(
+            "What section do you want to remove content from?",
+            SectionType.entries.subList(1, SectionType.entries.size - 1).map { it.name.replace("_", " ") })
         val target = promptTargetBranch("Select the target branch to remove this from:")
         ResumeManager().removeFromSection(section, target)
     }
@@ -61,15 +65,18 @@ class RemoveCommand : CliktCommand(name = "remove", help = "Remove content from 
 class UpdateCommand : CliktCommand(name = "update", help = "Update resume content") {
 
     override fun run() {
-        val section = promptSection("What section do you want to update?")
+        val section = promptSection(
+            "What section do you want to update?",
+            SectionType.entries.map { it.name.replace("_", " ") })
+
         val target = promptTargetBranch("Select the target branch to update this at:")
         ResumeManager().updateAtSection(section, target)
     }
 }
 
-private fun promptSection(message: String): SectionType {
-    val sections = SectionType.entries.map { it.name.replace("_", " ") }
-    val selected = KInquirer.promptList(message, sections.map { it.lowercase().replaceFirstChar { c -> c.uppercase() } }).replace(" ","_").uppercase()
+private fun promptSection(message: String, choices: List<String>): SectionType {
+    val selected = KInquirer.promptList(message, choices.map { it.lowercase().replaceFirstChar { c -> c.uppercase() } })
+        .replace(" ", "_").uppercase()
     return SectionType.valueOf(selected.replace(" ", "_").uppercase())
 }
 
@@ -78,7 +85,11 @@ private fun promptTargetBranch(message: String): String {
 }
 
 class CompileCommand : CliktCommand(name = "compile", help = "Compile LaTeX resume to PDF") {
-    private val generate by option("--generate", "-g", help = "Generate LaTeX file before compiling").flag(default = true)
+    private val generate by option(
+        "--generate",
+        "-g",
+        help = "Generate LaTeX file before compiling"
+    ).flag(default = true)
     private val clean by option("--clean", "-c", help = "Clean auxiliary files after compilation").flag()
     private val open by option("--open", "-o", help = "Open PDF after compilation").flag()
 
@@ -107,7 +118,13 @@ class CompileCommand : CliktCommand(name = "compile", help = "Compile LaTeX resu
             val process = ProcessBuilder("pdflatex", "resume.tex")
                 .directory(File("."))
                 .redirectErrorStream(true)
-                .redirectOutput(ProcessBuilder.Redirect.to(File(if (System.getProperty("os.name").lowercase().contains("win")) "NUL" else "/dev/null")))
+                .redirectOutput(
+                    ProcessBuilder.Redirect.to(
+                        File(
+                            if (System.getProperty("os.name").lowercase().contains("win")) "NUL" else "/dev/null"
+                        )
+                    )
+                )
                 .start()
 
             val exitCode = process.waitFor()
@@ -150,7 +167,7 @@ class CompileCommand : CliktCommand(name = "compile", help = "Compile LaTeX resu
     private fun openPdf() {
         if (pdfFile.exists()) {
             try {
-                if(Desktop.isDesktopSupported()){
+                if (Desktop.isDesktopSupported()) {
                     Desktop.getDesktop().open(pdfFile)
                 }
                 println("📖 Opened resume.pdf")

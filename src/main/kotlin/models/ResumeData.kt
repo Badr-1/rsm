@@ -10,6 +10,7 @@ import utils.Utils.toCommitMessage
 import java.util.Collections.emptyList
 
 enum class SectionType {
+    PERSONAL_INFO,
     EDUCATION,
     EXPERIENCE,
     PROJECTS,
@@ -26,12 +27,34 @@ enum class TechnicalSkillType {
 
 @Serializable
 data class PersonalInfo(
-    val name: String = "",
-    val phone: String = "",
-    val email: String = "",
-    val linkedin: String = "",
-    val github: String = ""
-)
+    var name: String = "",
+    var phone: String = "",
+    var email: String = "",
+    var linkedin: String = "",
+    var github: String = ""
+) {
+    companion object {
+        fun collect(): PersonalInfo {
+            println("\n👤 Personal Information:")
+            val name = readLineRequired("Full Name: ")
+            val phone = readLineRequired("Phone Number: ")
+            val email = readLineRequired("Email: ")
+            val linkedin = readLineOptional("LinkedIn URL: ")
+            val github = readLineOptional("GitHub URL: ")
+
+            return PersonalInfo(name, phone, email, linkedin, github)
+        }
+    }
+
+    fun update() {
+        name = readLineOptional("Full Name ($name): ", name)
+        phone = readLineOptional("Phone Number ($phone): ", phone)
+        email = readLineOptional("Email ($email): ", email)
+        linkedin = readLineOptional("LinkedIn URL${if(linkedin.isNotEmpty()) " ($linkedin): " else ": "}", linkedin)
+        github = readLineOptional("GitHub URL${if(github.isNotEmpty()) " ($github): " else ": "}", github)
+    }
+
+}
 
 @Serializable
 data class Education(
