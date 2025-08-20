@@ -1,7 +1,6 @@
 import com.github.kinquirer.KInquirer
 import com.github.kinquirer.components.promptCheckbox
 import com.github.kinquirer.components.promptConfirm
-import com.github.kinquirer.components.promptInput
 import com.github.kinquirer.components.promptList
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.encodeToString
@@ -18,6 +17,8 @@ import java.io.File
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.errors.EmptyCommitException
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
+import utils.Utils.readLineOptional
+import utils.Utils.readLineRequired
 import utils.Utils.toCommitMessage
 
 val configFile = File("resume-config.json")
@@ -222,7 +223,8 @@ class ResumeManager {
         message: String,
         choices: List<String>,
     ) {
-        val removedItems = KInquirer.promptCheckbox(message, choices, minNumOfSelection = 1, hint = "pick using spacebar")
+        val removedItems =
+            KInquirer.promptCheckbox(message, choices, minNumOfSelection = 1, hint = "pick using spacebar")
         var metadata = ""
         when (where) {
             SectionType.EDUCATION -> {
@@ -329,11 +331,11 @@ class ResumeManager {
 
     private fun collectPersonalInfo(): PersonalInfo {
         println("\n👤 Personal Information:")
-        val name = readLine("Full Name: ").escapeLatexSpecialChars()
-        val phone = readLine("Phone Number: ").escapeLatexSpecialChars()
-        val email = readLine("Email: ").escapeLatexSpecialChars()
-        val linkedin = readLine("LinkedIn URL: ").escapeLatexSpecialChars()
-        val github = readLine("GitHub URL: ").escapeLatexSpecialChars()
+        val name = readLineRequired("Full Name: ")
+        val phone = readLineRequired("Phone Number: ")
+        val email = readLineRequired("Email: ")
+        val linkedin = readLineOptional("LinkedIn URL: ")
+        val github = readLineOptional("GitHub URL: ")
 
         return PersonalInfo(name, phone, email, linkedin, github)
     }
@@ -343,11 +345,11 @@ class ResumeManager {
         val educationList = mutableListOf<Education>()
 
         do {
-            val institution = readLine("Institution: ").escapeLatexSpecialChars()
-            val degree = readLine("Degree: ").escapeLatexSpecialChars()
-            val location = readLine("Location: ").escapeLatexSpecialChars()
-            val graduationDate = readLine("Graduation Date: ").escapeLatexSpecialChars()
-            val gpa = readLine("GPA (optional): ").escapeLatexSpecialChars()
+            val institution = readLineRequired("Institution: ")
+            val degree = readLineRequired("Degree: ")
+            val location = readLineRequired("Location: ")
+            val graduationDate = readLineRequired("Graduation Date: ")
+            val gpa = readLineOptional("GPA: ")
 
             educationList.add(
                 Education(
@@ -370,15 +372,15 @@ class ResumeManager {
         val experienceList = mutableListOf<Experience>()
 
         do {
-            val company = readLine("Company: ").escapeLatexSpecialChars()
-            val position = readLine("Position: ").escapeLatexSpecialChars()
-            val location = readLine("Location: ").escapeLatexSpecialChars()
-            val date = readLine("Date: ").escapeLatexSpecialChars()
+            val company = readLineRequired("Company: ")
+            val position = readLineRequired("Position: ")
+            val location = readLineRequired("Location: ")
+            val date = readLineRequired("Date: ")
 
             println("Bullet Points (press Enter on empty line to finish):")
             val bullets = mutableListOf<String>()
             do {
-                val bullet = readLine("• ").escapeLatexSpecialChars()
+                val bullet = readLineOptional("• ")
                 if (bullet.isNotBlank()) bullets.add(bullet)
             } while (bullet.isNotBlank())
 
@@ -403,14 +405,14 @@ class ResumeManager {
         val projectsList = mutableListOf<Project>()
 
         do {
-            val name = readLine("Project Name: ").escapeLatexSpecialChars()
-            val technologies = readLine("Technologies: ").escapeLatexSpecialChars()
-            val date = readLine("Date: ").escapeLatexSpecialChars()
+            val name = readLineRequired("Project Name: ")
+            val technologies = readLineRequired("Technologies: ")
+            val date = readLineRequired("Date: ")
 
             println("Project Details (press Enter on empty line to finish):")
             val bullets = mutableListOf<String>()
             do {
-                val bullet = readLine("• ").escapeLatexSpecialChars()
+                val bullet = readLineOptional("• ")
                 if (bullet.isNotBlank()) bullets.add(bullet)
             } while (bullet.isNotBlank())
 
@@ -433,16 +435,16 @@ class ResumeManager {
         println(prompt)
 
         val languages =
-            readLine("Languages (comma-separated): ").split(",").map { it.trim().escapeLatexSpecialChars() }
+            readLineRequired("Languages (comma-separated): ").split(",").map { it.trim() }
                 .filter { it.isNotEmpty() }.toMutableList()
         val frameworks =
-            readLine("Frameworks (comma-separated): ").split(",").map { it.trim().escapeLatexSpecialChars() }
+            readLineRequired("Frameworks (comma-separated): ").split(",").map { it.trim() }
                 .filter { it.isNotEmpty() }.toMutableList()
         val developerTools =
-            readLine("Technologies (comma-separated): ").split(",").map { it.trim().escapeLatexSpecialChars() }
+            readLineRequired("Technologies (comma-separated): ").split(",").map { it.trim() }
                 .filter { it.isNotEmpty() }.toMutableList()
         val libraries =
-            readLine("Libraries (comma-separated): ").split(",").map { it.trim().escapeLatexSpecialChars() }
+            readLineRequired("Libraries (comma-separated): ").split(",").map { it.trim() }
                 .filter { it.isNotEmpty() }.toMutableList()
 
         return TechnicalSkills(languages, frameworks, developerTools, libraries)
@@ -453,9 +455,9 @@ class ResumeManager {
         val certificationsList = mutableListOf<Certification>()
 
         do {
-            val name = readLine("Certification Name: ").escapeLatexSpecialChars()
-            val issuingOrganization = readLine("Issuing Organization: ").escapeLatexSpecialChars()
-            val issueDate = readLine("Issue Date: ").escapeLatexSpecialChars()
+            val name = readLineRequired("Certification Name: ")
+            val issuingOrganization = readLineRequired("Issuing Organization: ")
+            val issueDate = readLineRequired("Issue Date: ")
 
             certificationsList.add(
                 Certification(
@@ -521,10 +523,6 @@ class ResumeManager {
         return git.repository.branch
     }
 
-    private fun readLine(prompt: String, default: String = ""): String {
-        return KInquirer.promptInput(prompt, default)
-    }
-
     private fun saveAndCommit(data: ResumeData, git: Git, message: String) {
         saveConfig(data)
         git.add().addFilepattern(".").call()
@@ -537,21 +535,4 @@ class ResumeManager {
         println("✅ $message")
     }
 
-    private fun String.escapeLatexSpecialChars(): String {
-        return this.replace("""[&%$#_{}~^\\]""".toRegex()) { matchResult ->
-            when (val match = matchResult.value) {
-                "&" -> "\\&"
-                "%" -> "\\%"
-                "$" -> "\\$"
-                "#" -> "\\#"
-                "_" -> "\\_"
-                "{" -> "\\{"
-                "}" -> "\\}"
-                "~" -> "\\textasciitilde{}"
-                "^" -> "\\textasciicircum{}"
-                "\\" -> "\\textbackslash{}"
-                else -> match
-            }
-        }
-    }
 }
