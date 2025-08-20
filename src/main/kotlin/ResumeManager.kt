@@ -1,6 +1,5 @@
 import com.github.kinquirer.KInquirer
 import com.github.kinquirer.components.promptCheckbox
-import com.github.kinquirer.components.promptConfirm
 import com.github.kinquirer.components.promptList
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.encodeToString
@@ -54,11 +53,14 @@ class ResumeManager {
 
             sectionsToFill.forEach { sectionToFill ->
                 when (sectionToFill) {
-                    SectionType.EDUCATION -> resumeData.education = collectEducation("\n🎓 Education:")
-                    SectionType.EXPERIENCE -> resumeData.experience = collectExperience("\n💼 Experience:")
-                    SectionType.PROJECTS -> resumeData.projects = collectProjects("\n🚀 Projects:")
-                    SectionType.TECHNICAL_SKILLS -> resumeData.technicalSkills = collectTechnicalSkills("\n🔧 Technical Skills:")
-                    SectionType.CERTIFICATIONS -> resumeData.certifications = collectCertifications("\n🏆 Certifications:")
+                    SectionType.EDUCATION -> resumeData.education = Education.collect("\n🎓 Education:")
+                    SectionType.EXPERIENCE -> resumeData.experience = Experience.collect("\n💼 Experience:")
+                    SectionType.PROJECTS -> resumeData.projects = Project.collect("\n🚀 Projects:")
+                    SectionType.TECHNICAL_SKILLS -> resumeData.technicalSkills =
+                        TechnicalSkills.collect("\n🔧 Technical Skills:")
+
+                    SectionType.CERTIFICATIONS -> resumeData.certifications =
+                        Certification.collect("\n🏆 Certifications:")
                 }
             }
 
@@ -91,6 +93,92 @@ class ResumeManager {
         }
     }
 
+    fun updateAtSection(section: SectionType, target: String) {
+        val git = openGitRepository()
+        git.checkout().setName(target).call()
+
+        val resumeData = loadConfig()
+        when (section) {
+            SectionType.EDUCATION -> updateWhatAtWhere(
+                git,
+                section,
+                resumeData,
+                "Select education entry to update:",
+                resumeData.education.map { it.toString() })
+
+            SectionType.EXPERIENCE -> updateWhatAtWhere(
+                git,
+                section,
+                resumeData,
+                "Select experience entry to update:",
+                resumeData.experience.map { it.toString() }
+            )
+
+            SectionType.PROJECTS -> updateWhatAtWhere(
+                git,
+                section,
+                resumeData,
+                "Select project entry to update:",
+                resumeData.projects.map { it.toString() }
+            )
+
+            SectionType.TECHNICAL_SKILLS -> updateWhatAtWhere(
+                git = git,
+                where = section,
+                resumeData = resumeData,
+                message = "Select technical skill to update:",
+                choices = TechnicalSkillType.entries.map { skillType -> skillType.name.lowercase() },
+            )
+
+            SectionType.CERTIFICATIONS -> updateWhatAtWhere(
+                git,
+                section,
+                resumeData,
+                "Select certification entry to update:",
+                resumeData.certifications.map { it.toString() }
+            )
+        }
+    }
+
+    fun updateWhatAtWhere(
+        git: Git,
+        where: SectionType,
+        resumeData: ResumeData,
+        message: String,
+        choices: List<String>
+    ) {
+        val itemsToUpdate =
+            KInquirer.promptCheckbox(message, choices, hint = "pick using spacebar")
+        var metaData = ""
+        when (where) {
+            SectionType.EDUCATION -> {
+                metaData += "Updated education\n\n"
+                resumeData.education.filter { it.toString() in itemsToUpdate }.forEach { metaData += it.update() }
+            }
+
+            SectionType.EXPERIENCE -> {
+                metaData += "Updated experience\n\n"
+                resumeData.experience.filter { it.toString() in itemsToUpdate }.forEach { metaData += it.update() }
+            }
+
+            SectionType.PROJECTS -> {
+                metaData += "Updated projects\n\n"
+                resumeData.projects.filter { it.toString() in itemsToUpdate }.forEach { metaData += it.update() }
+            }
+
+            SectionType.TECHNICAL_SKILLS -> {
+                metaData += "Updated technical skills\n\n"
+                resumeData.technicalSkills.update(itemsToUpdate.map { TechnicalSkillType.valueOf(it.uppercase()) })
+            }
+
+            SectionType.CERTIFICATIONS -> {
+                metaData += "Updated certifications\n\n"
+                resumeData.certifications.filter { it.toString() in itemsToUpdate }.forEach { metaData += it.update() }
+            }
+        }
+        saveAndCommit(resumeData, git, metaData)
+    }
+
     fun addToSection(section: SectionType, target: String?) {
         val git = openGitRepository()
         val targetBranch = target ?: getCurrentBranch(git)
@@ -105,7 +193,7 @@ class ResumeManager {
                     resumeData.education.mapIndexed { index, education -> "$index: $education" } + "${resumeData.education.size}: add to the end"
                 ).split(":").first().toInt()
 
-                resumeData.education.addAll(position, collectEducation("add new education entry:").apply {
+                resumeData.education.addAll(position, Education.collect("add new education entry:").apply {
                     metaData += this.toCommitMessage("Added new education\n\n")
                 })
             }
@@ -116,7 +204,7 @@ class ResumeManager {
                     resumeData.experience.mapIndexed { index, experience -> "$index: $experience" } + "${resumeData.experience.size}: add to the end"
                 ).split(":").first().toInt()
 
-                resumeData.experience.addAll(position, collectExperience("add new experience entry:").apply {
+                resumeData.experience.addAll(position, Experience.collect("add new experience entry:").apply {
                     metaData += this.toCommitMessage("Added new experiences\n\n")
                 })
             }
@@ -127,14 +215,14 @@ class ResumeManager {
                     "Select the position to add new project entry to:",
                     resumeData.projects.mapIndexed { index, project -> "$index: $project" } + "${resumeData.projects.size}: add to the end"
                 ).split(":").first().toInt()
-                resumeData.projects.addAll(position, collectProjects("add new project entry:").apply {
+                resumeData.projects.addAll(position, Project.collect("add new project entry:").apply {
                     metaData += this.toCommitMessage("Added new projects\n\n")
                 })
             }
 
             SectionType.TECHNICAL_SKILLS -> {
                 metaData = "Added new technical skills\n\n"
-                resumeData.technicalSkills += collectTechnicalSkills("add new technical skills:").apply {
+                resumeData.technicalSkills += TechnicalSkills.collect("add new technical skills:").apply {
                     metaData += languages.toCommitMessage("Languages") +
                             frameworks.toCommitMessage("Frameworks") +
                             technologies.toCommitMessage("Technologies") +
@@ -147,7 +235,7 @@ class ResumeManager {
                     "Select the position to add new certification entry to:",
                     resumeData.certifications.mapIndexed { index, certification -> "$index: $certification" } + "${resumeData.certifications.size}: add to the end"
                 ).split(":").first().toInt()
-                resumeData.certifications.addAll(position, collectCertifications("add new certification entry:").apply {
+                resumeData.certifications.addAll(position, Certification.collect("add new certification entry:").apply {
                     metaData += this.toCommitMessage("Added new certifications\n\n")
                 })
             }
@@ -247,45 +335,7 @@ class ResumeManager {
 
             SectionType.TECHNICAL_SKILLS -> {
                 metadata += "Removed technical skills\n\n"
-                removedItems.forEach { item ->
-                    when (val skillType = TechnicalSkillType.valueOf(item.uppercase())) {
-                        TechnicalSkillType.LANGUAGES -> {
-                            metadata += removeTechnicalSkill(
-                                where = skillType,
-                                resumeData = resumeData,
-                                message = "Select language to remove:",
-                                choices = resumeData.technicalSkills.languages,
-                            )
-                        }
-
-                        TechnicalSkillType.FRAMEWORKS -> {
-                            metadata += removeTechnicalSkill(
-                                where = skillType,
-                                resumeData = resumeData,
-                                message = "Select framework to remove:",
-                                choices = resumeData.technicalSkills.frameworks,
-                            )
-                        }
-
-                        TechnicalSkillType.TECHNOLOGIES -> {
-                            metadata += removeTechnicalSkill(
-                                where = skillType,
-                                resumeData = resumeData,
-                                message = "Select technology to remove:",
-                                choices = resumeData.technicalSkills.technologies,
-                            )
-                        }
-
-                        TechnicalSkillType.LIBRARIES -> {
-                            metadata += removeTechnicalSkill(
-                                where = skillType,
-                                resumeData = resumeData,
-                                message = "Select library to remove:",
-                                choices = resumeData.technicalSkills.libraries,
-                            )
-                        }
-                    }
-                }
+                metadata += resumeData.technicalSkills.remove(removedItems.map { TechnicalSkillType.valueOf(it.uppercase()) })
             }
 
             SectionType.CERTIFICATIONS -> {
@@ -294,42 +344,6 @@ class ResumeManager {
             }
         }
         saveAndCommit(resumeData, git, metadata)
-    }
-
-    private fun removeTechnicalSkill(
-        where: TechnicalSkillType,
-        resumeData: ResumeData,
-        message: String,
-        choices: List<String>,
-    ): String {
-        val removedSkills = KInquirer.promptCheckbox(
-            message,
-            choices,
-            hint = "pick using spacebar"
-        )
-        var metaData = ""
-        when (where) {
-            TechnicalSkillType.LANGUAGES -> {
-                resumeData.technicalSkills.languages.removeIf { it in removedSkills }
-                metaData += removedSkills.toCommitMessage("Removed languages")
-            }
-
-            TechnicalSkillType.FRAMEWORKS -> {
-                resumeData.technicalSkills.frameworks.removeIf { it in removedSkills }
-                metaData += removedSkills.toCommitMessage("Removed frameworks")
-            }
-
-            TechnicalSkillType.TECHNOLOGIES -> {
-                resumeData.technicalSkills.technologies.removeIf { it in removedSkills }
-                metaData += removedSkills.toCommitMessage("Removed technologies")
-            }
-
-            TechnicalSkillType.LIBRARIES -> {
-                resumeData.technicalSkills.libraries.removeIf { it in removedSkills }
-                metaData += removedSkills.toCommitMessage("Removed libraries")
-            }
-        }
-        return metaData
     }
 
     private fun collectPersonalInfo(): PersonalInfo {
@@ -343,138 +357,6 @@ class ResumeManager {
         return PersonalInfo(name, phone, email, linkedin, github)
     }
 
-    private fun collectEducation(prompt: String): MutableList<Education> {
-        println(prompt)
-        val educationList = mutableListOf<Education>()
-
-        do {
-            val institution = readLineRequired("Institution: ")
-            val degree = readLineRequired("Degree: ")
-            val location = readLineRequired("Location: ")
-            val graduationDate = readLineRequired("Graduation Date: ")
-            val gpa = readLineOptional("GPA: ")
-
-            educationList.add(
-                Education(
-                    institution = institution,
-                    degree = degree,
-                    location = location,
-                    graduationDate = graduationDate,
-                    gpa = gpa,
-                )
-            )
-
-            val addMore = KInquirer.promptConfirm("Add another education entry?", default = false)
-        } while (addMore)
-
-        return educationList
-    }
-
-    private fun collectExperience(prompt: String): MutableList<Experience> {
-        println(prompt)
-        val experienceList = mutableListOf<Experience>()
-
-        do {
-            val company = readLineRequired("Company: ")
-            val position = readLineRequired("Position: ")
-            val location = readLineRequired("Location: ")
-            val date = readLineRequired("Date: ")
-
-            println("Bullet Points (press Enter on empty line to finish):")
-            val bullets = mutableListOf<String>()
-            do {
-                val bullet = readLineOptional("• ")
-                if (bullet.isNotBlank()) bullets.add(bullet)
-            } while (bullet.isNotBlank())
-
-            experienceList.add(
-                Experience(
-                    company = company,
-                    position = position,
-                    location = location,
-                    date = date,
-                    bullets = bullets
-                )
-            )
-
-            val addMore = KInquirer.promptConfirm("Add another experience entry?", default = false)
-        } while (addMore)
-
-        return experienceList
-    }
-
-    private fun collectProjects(prompt: String): MutableList<Project> {
-        println(prompt)
-        val projectsList = mutableListOf<Project>()
-
-        do {
-            val name = readLineRequired("Project Name: ")
-            val technologies = readLineRequired("Technologies: ")
-            val date = readLineRequired("Date: ")
-
-            println("Project Details (press Enter on empty line to finish):")
-            val bullets = mutableListOf<String>()
-            do {
-                val bullet = readLineOptional("• ")
-                if (bullet.isNotBlank()) bullets.add(bullet)
-            } while (bullet.isNotBlank())
-
-            projectsList.add(
-                Project(
-                    name = name,
-                    technologies = technologies,
-                    date = date,
-                    bullets = bullets
-                )
-            )
-
-            val addMore = KInquirer.promptConfirm("Add another project entry?", default = false)
-        } while (addMore)
-
-        return projectsList
-    }
-
-    private fun collectTechnicalSkills(prompt: String): TechnicalSkills {
-        println(prompt)
-
-        val languages =
-            readLineOptional("Languages (comma-separated): ").split(",").map { it.trim() }
-                .filter { it.isNotEmpty() }.toMutableList()
-        val frameworks =
-            readLineOptional("Frameworks (comma-separated): ").split(",").map { it.trim() }
-                .filter { it.isNotEmpty() }.toMutableList()
-        val developerTools =
-            readLineOptional("Technologies (comma-separated): ").split(",").map { it.trim() }
-                .filter { it.isNotEmpty() }.toMutableList()
-        val libraries =
-            readLineOptional("Libraries (comma-separated): ").split(",").map { it.trim() }
-                .filter { it.isNotEmpty() }.toMutableList()
-
-        return TechnicalSkills(languages, frameworks, developerTools, libraries)
-    }
-
-    private fun collectCertifications(prompt: String): MutableList<Certification> {
-        println(prompt)
-        val certificationsList = mutableListOf<Certification>()
-
-        do {
-            val name = readLineRequired("Certification Name: ")
-            val issuingOrganization = readLineRequired("Issuing Organization: ")
-            val issueDate = readLineRequired("Issue Date: ")
-
-            certificationsList.add(
-                Certification(
-                    name = name,
-                    issuingOrganization = issuingOrganization,
-                    issueDate = issueDate
-                )
-            )
-
-            val addMore = KInquirer.promptConfirm("Add another certification entry?", default = false)
-        } while (addMore)
-
-        return certificationsList
-    }
 
     fun generateLatexFile() {
         if (configFile.exists()) {

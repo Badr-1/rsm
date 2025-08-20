@@ -58,6 +58,15 @@ class RemoveCommand : CliktCommand(name = "remove", help = "Remove content from 
     }
 }
 
+class UpdateCommand : CliktCommand(name = "update", help = "Update resume content") {
+
+    override fun run() {
+        val section = promptSection("What section do you want to update?")
+        val target = promptTargetBranch("Select the target branch to update this at:")
+        ResumeManager().updateAtSection(section, target)
+    }
+}
+
 private fun promptSection(message: String): SectionType {
     val sections = SectionType.entries.map { it.name.replace("_", " ") }
     val selected = KInquirer.promptList(message, sections.map { it.lowercase().replaceFirstChar { c -> c.uppercase() } }).replace(" ","_").uppercase()
@@ -160,6 +169,7 @@ fun main(args: Array<String>) = rsm
         RoleCommand(),
         AddCommand(),
         RemoveCommand(),
+        UpdateCommand(),
         CompileCommand(),
     )
     .main(args)
