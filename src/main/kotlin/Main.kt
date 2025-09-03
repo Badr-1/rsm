@@ -5,6 +5,8 @@ import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.kinquirer.KInquirer
 import com.github.kinquirer.components.promptList
+import com.github.kinquirer.components.promptListObject
+import com.github.kinquirer.core.Choice
 import models.SectionType
 import utils.FileUtils
 import utils.GitUtils
@@ -45,7 +47,7 @@ class AddCommand : CliktCommand(name = "add", help = "Add content to resume") {
     override fun run() {
         val section = promptSection(
             "What section do you want to add content to?",
-            SectionType.entries.subList(1, SectionType.entries.size - 1).map { it.name.replace("_", " ") })
+            SectionType.entries.subList(1, SectionType.entries.size - 1).map { Choice(it.displayName, it) })
         val target = promptTargetBranch("Select the target branch to add this to:")
         ResumeManager().addToSection(section, target)
     }
@@ -56,7 +58,7 @@ class RemoveCommand : CliktCommand(name = "remove", help = "Remove content from 
     override fun run() {
         val section = promptSection(
             "What section do you want to remove content from?",
-            SectionType.entries.subList(1, SectionType.entries.size - 1).map { it.name.replace("_", " ") })
+            SectionType.entries.subList(1, SectionType.entries.size - 1).map { Choice(it.displayName, it) })
         val target = promptTargetBranch("Select the target branch to remove this from:")
         ResumeManager().removeFromSection(section, target)
     }
@@ -67,17 +69,16 @@ class UpdateCommand : CliktCommand(name = "update", help = "Update resume conten
     override fun run() {
         val section = promptSection(
             "What section do you want to update?",
-            SectionType.entries.map { it.name.replace("_", " ") })
+            SectionType.entries.map { Choice(it.displayName, it) })
 
         val target = promptTargetBranch("Select the target branch to update this at:")
         ResumeManager().updateAtSection(section, target)
     }
 }
 
-private fun promptSection(message: String, choices: List<String>): SectionType {
-    val selected = KInquirer.promptList(message, choices.map { it.lowercase().replaceFirstChar { c -> c.uppercase() } })
-        .replace(" ", "_").uppercase()
-    return SectionType.valueOf(selected.replace(" ", "_").uppercase())
+private fun promptSection(message: String, choices: List<Choice<SectionType>>): SectionType {
+    val selected = KInquirer.promptListObject(message, choices)
+    return selected
 }
 
 private fun promptTargetBranch(message: String): String {

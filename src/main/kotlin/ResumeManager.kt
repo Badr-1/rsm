@@ -1,6 +1,8 @@
 import com.github.kinquirer.KInquirer
 import com.github.kinquirer.components.promptCheckbox
+import com.github.kinquirer.components.promptCheckboxObject
 import com.github.kinquirer.components.promptList
+import com.github.kinquirer.core.Choice
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.encodeToString
 import models.Certification
@@ -41,16 +43,17 @@ class ResumeManager {
             )
 
 
-            val sectionsToFill = KInquirer.promptCheckbox(
-                message = "choose sections you want to fill",
-                choices = SectionType.entries.map { it.name.replace("_", " ") })
-                .map { SectionType.valueOf(it.replace(" ", "_").uppercase()) }
-
             val resumeData = ResumeData()
+            resumeData.personalInfo = PersonalInfo.collect()
+
+            val sectionsToFill = KInquirer.promptCheckboxObject(
+                message = "choose sections you want to fill",
+                choices = SectionType.entries.subList(1, SectionType.entries.size - 1).map { Choice(it.displayName, it) })
+
 
             sectionsToFill.forEach { sectionToFill ->
                 when (sectionToFill) {
-                    SectionType.PERSONAL_INFO -> resumeData.personalInfo = PersonalInfo.collect()
+                    SectionType.PERSONAL_INFO -> {}
                     SectionType.EDUCATION -> resumeData.education = Education.collect("\n🎓 Education:")
                     SectionType.EXPERIENCE -> resumeData.experience = Experience.collect("\n💼 Experience:")
                     SectionType.PROJECTS -> resumeData.projects = Project.collect("\n🚀 Projects:")

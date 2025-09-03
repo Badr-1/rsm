@@ -9,13 +9,13 @@ import utils.Utils.readLineRequired
 import utils.Utils.toCommitMessage
 import java.util.Collections.emptyList
 
-enum class SectionType {
-    PERSONAL_INFO,
-    EDUCATION,
-    EXPERIENCE,
-    PROJECTS,
-    TECHNICAL_SKILLS,
-    CERTIFICATIONS
+enum class SectionType(val displayName: String) {
+    PERSONAL_INFO("Personal Info"),
+    EDUCATION("Education"),
+    EXPERIENCE("Experience"),
+    PROJECTS("Projects"),
+    TECHNICAL_SKILLS("Technical Skills"),
+    CERTIFICATIONS("Certifications"),
 }
 
 enum class TechnicalSkillType {
