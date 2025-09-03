@@ -12,6 +12,7 @@ import utils.FileUtils
 import utils.GitUtils
 import java.awt.Desktop
 import java.io.File
+import kotlin.collections.filter
 
 val rsm = ResumeCLI()
 
@@ -47,7 +48,7 @@ class AddCommand : CliktCommand(name = "add", help = "Add content to resume") {
     override fun run() {
         val section = promptSection(
             "What section do you want to add content to?",
-            SectionType.entries.subList(1, SectionType.entries.size - 1).map { Choice(it.displayName, it) })
+            SectionType.entries.filter { !it.isFixed }.map { Choice(it.displayName, it) })
         val target = promptTargetBranch("Select the target branch to add this to:")
         ResumeManager().addToSection(section, target)
     }
@@ -58,7 +59,7 @@ class RemoveCommand : CliktCommand(name = "remove", help = "Remove content from 
     override fun run() {
         val section = promptSection(
             "What section do you want to remove content from?",
-            SectionType.entries.subList(1, SectionType.entries.size - 1).map { Choice(it.displayName, it) })
+            SectionType.entries.filter { !it.isFixed }.map { Choice(it.displayName, it) })
         val target = promptTargetBranch("Select the target branch to remove this from:")
         ResumeManager().removeFromSection(section, target)
     }

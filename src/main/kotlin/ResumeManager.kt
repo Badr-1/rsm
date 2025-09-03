@@ -2,6 +2,7 @@ import com.github.kinquirer.KInquirer
 import com.github.kinquirer.components.promptCheckbox
 import com.github.kinquirer.components.promptCheckboxObject
 import com.github.kinquirer.components.promptList
+import com.github.kinquirer.components.promptOrderableListObject
 import com.github.kinquirer.core.Choice
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.encodeToString
@@ -48,7 +49,8 @@ class ResumeManager {
 
             val sectionsToFill = KInquirer.promptCheckboxObject(
                 message = "choose sections you want to fill",
-                choices = SectionType.entries.subList(1, SectionType.entries.size - 1).map { Choice(it.displayName, it) })
+                choices = SectionType.entries.filter { !it.isFixed }
+                    .map { Choice(it.displayName, it) })
 
 
             sectionsToFill.forEach { sectionToFill ->
@@ -64,6 +66,14 @@ class ResumeManager {
                         Certification.collect("\n🏆 Certifications:")
                 }
             }
+
+            val orderedSections = KInquirer.promptOrderableListObject(
+                message = "choose the order of sections",
+                choices = SectionType.entries.filter { !it.isFixed }.map { Choice(it.displayName, it) }.toMutableList(),
+                hint = "use arrow keys to move up/down, spacebar to select to reorder"
+            )
+            resumeData.orderedSections = orderedSections.ifEmpty { SectionType.entries.filter { !it.isFixed } }
+
 
             saveConfig(resumeData)
 
@@ -157,7 +167,8 @@ class ResumeManager {
             KInquirer.promptCheckbox(message, choices, hint = "pick using spacebar")
         var metaData = ""
         when (where) {
-            SectionType.PERSONAL_INFO -> {/*handled earlier*/}
+            SectionType.PERSONAL_INFO -> {/*handled earlier*/
+            }
 
             SectionType.EDUCATION -> {
                 metaData += "Updated education\n\n"
@@ -195,7 +206,8 @@ class ResumeManager {
         val resumeData = loadConfig()
         var metaData = ""
         when (section) {
-            SectionType.PERSONAL_INFO -> {/*can't add to this section*/}
+            SectionType.PERSONAL_INFO -> {/*can't add to this section*/
+            }
 
             SectionType.EDUCATION -> {
                 val position = KInquirer.promptList(
@@ -264,7 +276,8 @@ class ResumeManager {
         val resumeData = loadConfig()
 
         when (section) {
-            SectionType.PERSONAL_INFO -> {/*should not remove from this section*/}
+            SectionType.PERSONAL_INFO -> {/*should not remove from this section*/
+            }
 
             SectionType.EDUCATION -> {
                 removeWhatFromWhere(
@@ -330,7 +343,8 @@ class ResumeManager {
             KInquirer.promptCheckbox(message, choices, minNumOfSelection = 1, hint = "pick using spacebar")
         var metadata = ""
         when (where) {
-            SectionType.PERSONAL_INFO -> {/*handled earlier*/}
+            SectionType.PERSONAL_INFO -> {/*handled earlier*/
+            }
 
             SectionType.EDUCATION -> {
                 resumeData.education.removeIf { it.toString() in removedItems }

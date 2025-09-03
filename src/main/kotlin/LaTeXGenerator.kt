@@ -4,6 +4,7 @@ import models.Experience
 import models.PersonalInfo
 import models.Project
 import models.ResumeData
+import models.SectionType.*
 import models.TechnicalSkills
 
 
@@ -14,11 +15,16 @@ class LaTeXGenerator {
         return buildString {
             appendLine(generateHeader())
             appendLine(generatePersonalInfo(data.personalInfo))
-            appendLine(generateEducation(data.education))
-            appendLine(generateExperience(data.experience))
-            appendLine(generateProjects(data.projects))
-            appendLine(generateTechnicalSkills(data.technicalSkills))
-            appendLine(generateCertifications(data.certifications))
+            data.orderedSections.forEach{ sectionType ->
+                when(sectionType) {
+                    PERSONAL_INFO -> {/*it's a fixed section*/ }
+                    EDUCATION -> appendLine(generateEducation(data.education))
+                    EXPERIENCE -> appendLine(generateExperience(data.experience))
+                    PROJECTS -> appendLine(generateProjects(data.projects))
+                    TECHNICAL_SKILLS -> appendLine(generateTechnicalSkills(data.technicalSkills))
+                    CERTIFICATIONS -> appendLine(generateCertifications(data.certifications))
+                }
+            }
             appendLine(generateFooter())
         }
     }

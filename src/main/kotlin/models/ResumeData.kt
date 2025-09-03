@@ -9,8 +9,8 @@ import utils.Utils.readLineRequired
 import utils.Utils.toCommitMessage
 import java.util.Collections.emptyList
 
-enum class SectionType(val displayName: String) {
-    PERSONAL_INFO("Personal Info"),
+enum class SectionType(val displayName: String, val isFixed:Boolean = false) {
+    PERSONAL_INFO("Personal Info", true),
     EDUCATION("Education"),
     EXPERIENCE("Experience"),
     PROJECTS("Projects"),
@@ -533,6 +533,7 @@ data class Certification(
 
 @Serializable
 data class ResumeData(
+    var orderedSections: List<SectionType> = SectionType.entries.filter { !it.isFixed },
     var personalInfo: PersonalInfo = PersonalInfo(),
     var education: MutableList<Education> = emptyList(),
     var experience: MutableList<Experience> = emptyList(),
