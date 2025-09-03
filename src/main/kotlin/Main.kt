@@ -28,6 +28,13 @@ class InitCommand : CliktCommand(name = "init", help = "Initialize a new resume 
     }
 }
 
+class ReorderCommand : CliktCommand(name = "reorder", help = "Reorder items in a section") {
+    override fun run() {
+        val target = promptTargetBranch("Select the target branch to reorder this in:")
+        ResumeManager().reorderSections(target)
+    }
+}
+
 class GenerateCommand : CliktCommand(name = "generate", help = "Generate LaTeX resume from configuration") {
     override fun run() {
         val resumeManager = ResumeManager()
@@ -189,6 +196,7 @@ fun main(args: Array<String>) = rsm
         AddCommand(),
         RemoveCommand(),
         UpdateCommand(),
+        ReorderCommand(),
         CompileCommand(),
     )
     .main(args)
