@@ -2,6 +2,10 @@ package utils
 
 import com.github.kinquirer.KInquirer
 import com.github.kinquirer.components.promptInput
+import com.github.kinquirer.components.promptList
+import com.github.kinquirer.components.promptListObject
+import com.github.kinquirer.core.Choice
+import models.SectionType
 
 object Utils {
     fun List<Any>.toCommitMessage(title: String): String {
@@ -37,6 +41,15 @@ object Utils {
 
     fun readLineOptional(prompt: String, default: String = ""): String {
         return KInquirer.promptInput(message = prompt, hint = "(optional)", default = default).escapeLatexSpecialChars()
+    }
+
+    fun promptSection(message: String, choices: List<Choice<SectionType>>): SectionType {
+        val selected = KInquirer.promptListObject(message, choices)
+        return selected
+    }
+
+    fun promptTargetBranch(message: String): String {
+        return KInquirer.promptList(message, GitUtils.listBranches())
     }
 
 }

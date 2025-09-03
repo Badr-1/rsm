@@ -84,14 +84,7 @@ class UpdateCommand : CliktCommand(name = "update", help = "Update resume conten
     }
 }
 
-private fun promptSection(message: String, choices: List<Choice<SectionType>>): SectionType {
-    val selected = KInquirer.promptListObject(message, choices)
-    return selected
-}
 
-private fun promptTargetBranch(message: String): String {
-    return KInquirer.promptList(message, GitUtils.listBranches())
-}
 
 class CompileCommand : CliktCommand(name = "compile", help = "Compile LaTeX resume to PDF") {
     private val generate by option(
