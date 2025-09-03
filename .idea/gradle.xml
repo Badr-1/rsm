@@ -4,11 +4,25 @@
   <component name="GradleSettings">
     <option name="linkedExternalProjectsSettings">
       <GradleProjectSettings>
+        <compositeConfiguration>
+          <compositeBuild compositeDefinitionSource="SCRIPT">
+            <builds>
+              <build path="$PROJECT_DIR$/kotlin-inquirer" name="kotlin-inquirer">
+                <projects>
+                  <project path="$PROJECT_DIR$/kotlin-inquirer" />
+                  <project path="$PROJECT_DIR$/kotlin-inquirer/example" />
+                </projects>
+              </build>
+            </builds>
+          </compositeBuild>
+        </compositeConfiguration>
         <option name="externalProjectPath" value="$PROJECT_DIR$" />
         <option name="gradleHome" value="" />
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
+            <option value="$PROJECT_DIR$/kotlin-inquirer" />
+            <option value="$PROJECT_DIR$/kotlin-inquirer/example" />
           </set>
         </option>
       </GradleProjectSettings>
