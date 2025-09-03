@@ -3,13 +3,15 @@ package models
 import com.github.kinquirer.KInquirer
 import com.github.kinquirer.components.promptCheckbox
 import com.github.kinquirer.components.promptConfirm
+import com.github.kinquirer.components.promptOrderableListObject
+import com.github.kinquirer.core.Choice
 import kotlinx.serialization.Serializable
 import utils.Utils.readLineOptional
 import utils.Utils.readLineRequired
 import utils.Utils.toCommitMessage
 import java.util.Collections.emptyList
 
-enum class SectionType(val displayName: String, val isFixed:Boolean = false) {
+enum class SectionType(val displayName: String, val isFixed: Boolean = false) {
     PERSONAL_INFO("Personal Info", true),
     EDUCATION("Education"),
     EXPERIENCE("Experience"),
@@ -50,8 +52,8 @@ data class PersonalInfo(
         name = readLineOptional("Full Name ($name): ", name)
         phone = readLineOptional("Phone Number ($phone): ", phone)
         email = readLineOptional("Email ($email): ", email)
-        linkedin = readLineOptional("LinkedIn URL${if(linkedin.isNotEmpty()) " ($linkedin): " else ": "}", linkedin)
-        github = readLineOptional("GitHub URL${if(github.isNotEmpty()) " ($github): " else ": "}", github)
+        linkedin = readLineOptional("LinkedIn URL${if (linkedin.isNotEmpty()) " ($linkedin): " else ": "}", linkedin)
+        github = readLineOptional("GitHub URL${if (github.isNotEmpty()) " ($github): " else ": "}", github)
     }
 
 }
@@ -213,6 +215,14 @@ data class Experience(
         return metaData
     }
 
+    fun reorderBullets() {
+        bullets = KInquirer.promptOrderableListObject(
+            "Reorder Bullet Points:",
+            bullets.map { Choice(it, it) }.toMutableList(),
+            hint = "move using arrow keys"
+        )
+    }
+
     override fun toString(): String {
         return "$position at $company (${date})"
     }
@@ -296,6 +306,14 @@ data class Project(
 
     override fun toString(): String {
         return "$name (${date})"
+    }
+
+    fun reorderBullets() {
+        bullets = KInquirer.promptOrderableListObject(
+            "Reorder Bullet Points:",
+            bullets.map { Choice(it, it) }.toMutableList(),
+            hint = "move using arrow keys"
+        )
     }
 }
 
@@ -540,4 +558,26 @@ data class ResumeData(
     var projects: MutableList<Project> = emptyList(),
     var technicalSkills: TechnicalSkills = TechnicalSkills(),
     var certifications: MutableList<Certification> = emptyList()
-)
+) {
+    fun reorderEducation() {
+        education = KInquirer.promptOrderableListObject(
+            "Reorder Education Entries:",
+            education.map { Choice(it.toString(), it) }.toMutableList(),
+            hint = "move using arrow keys"
+        ) as MutableList<Education>
+    }
+    fun reorderExperience() {
+        experience = KInquirer.promptOrderableListObject(
+            "Reorder Experience Entries:",
+            experience.map { Choice(it.toString(), it) }.toMutableList(),
+            hint = "move using arrow keys"
+        ) as MutableList<Experience>
+    }
+    fun reorderProjects() {
+        projects = KInquirer.promptOrderableListObject(
+            "Reorder Project Entries:",
+            projects.map { Choice(it.toString(), it) }.toMutableList(),
+            hint = "move using arrow keys"
+        ) as MutableList<Project>
+    }
+}

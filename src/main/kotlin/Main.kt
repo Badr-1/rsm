@@ -9,7 +9,8 @@ import com.github.kinquirer.components.promptListObject
 import com.github.kinquirer.core.Choice
 import models.SectionType
 import utils.FileUtils
-import utils.GitUtils
+import utils.Utils.promptSection
+import utils.Utils.promptTargetBranch
 import java.awt.Desktop
 import java.io.File
 import kotlin.collections.filter
@@ -29,9 +30,15 @@ class InitCommand : CliktCommand(name = "init", help = "Initialize a new resume 
 }
 
 class ReorderCommand : CliktCommand(name = "reorder", help = "Reorder items in a section") {
+    private val section by option(
+        "--section",
+        "-s",
+        help = "choose section to reorder"
+    ).flag(default = false)
+
     override fun run() {
         val target = promptTargetBranch("Select the target branch to reorder this in:")
-        ResumeManager().reorderSections(target)
+        ResumeManager().reorderSections(target, section)
     }
 }
 

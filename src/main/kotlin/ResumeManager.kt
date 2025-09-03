@@ -1,6 +1,7 @@
 import com.github.kinquirer.KInquirer
 import com.github.kinquirer.components.promptCheckbox
 import com.github.kinquirer.components.promptCheckboxObject
+import com.github.kinquirer.components.promptConfirm
 import com.github.kinquirer.components.promptList
 import com.github.kinquirer.components.promptOrderableListObject
 import com.github.kinquirer.core.Choice
@@ -19,6 +20,7 @@ import java.io.File
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.errors.EmptyCommitException
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
+import utils.Utils.promptSection
 import utils.Utils.toCommitMessage
 
 val configFile = File("resume-config.json")
@@ -437,7 +439,7 @@ class ResumeManager {
         println("✅ $message")
     }
 
-    fun reorderSections(target: String) {
+    fun reorderSections(target: String, section: Boolean) {
         val git = openGitRepository()
         git.checkout().setName(target).call()
 
@@ -447,9 +449,55 @@ class ResumeManager {
             choices = SectionType.entries.filter { !it.isFixed }.map { Choice(it.displayName, it) }.toMutableList(),
             hint = "use arrow keys to move up/down, spacebar to select to reorder"
         )
+        if (section) {
+            val section = promptSection(
+                "What section do you want to reorder?",
+                SectionType.entries.filter { !it.isFixed }.map { Choice(it.displayName, it) })
+
+            reorderSection(resumeData, section)
+        }
         resumeData.orderedSections = orderedSections.ifEmpty { SectionType.entries.filter { !it.isFixed } }
         saveAndCommit(resumeData, git, "Reordered sections")
         git.checkout().setName("main").call()
+    }
+
+    fun reorderSection(resumeData: ResumeData, section: SectionType) {
+        when (section) {
+            SectionType.PERSONAL_INFO -> {}
+            SectionType.EDUCATION -> {
+                resumeData.reorderEducation()
+            }
+
+            SectionType.EXPERIENCE -> {
+                resumeData.reorderExperience()
+                resumeData.experience.forEach { experience ->
+                    val reorderBulletsConfirm = KInquirer.promptConfirm(
+                        "Do you want to reorder bullets for experience: $experience ?",
+                        default = false
+                    )
+                    if (reorderBulletsConfirm) {
+                        experience.reorderBullets()
+                    }
+
+                }
+            }
+
+            SectionType.PROJECTS -> {
+                resumeData.reorderProjects()
+                resumeData.projects.forEach { project ->
+                    val reorderBulletsConfirm = KInquirer.promptConfirm(
+                        "Do you want to reorder bullets for project: $project ?",
+                        default = false
+                    )
+                    if (reorderBulletsConfirm) {
+                        project.reorderBullets()
+                    }
+
+                }
+            }
+            SectionType.TECHNICAL_SKILLS -> {}
+            SectionType.CERTIFICATIONS -> {}
+        }
     }
 
 }
