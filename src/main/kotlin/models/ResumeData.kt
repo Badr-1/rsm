@@ -357,20 +357,18 @@ data class TechnicalSkills(
 
     fun update(items: List<String>): String {
         var metadata = ""
+        var newName: String
         items.forEach { item ->
-            KInquirer.promptCheckbox(
-                "Current $item (choose what to keep)",
-                choices = entries.getOrDefault(item, mutableListOf()),
-                hint = "pick using spacebar"
-            ).let { selectedSkills ->
-                if (selectedSkills.isNotEmpty()) {
-                    entries[item]?.clear()
-                    entries[item]?.addAll(selectedSkills)
-                }
-                entries[item]?.addAll(readLineOptional("New $item (comma-separated): ").split(",").map { it.trim() }
-                    .filter { it.isNotEmpty() }.toMutableList())
-                entries[item] = entries[item]?.distinct()?.toMutableList() ?: mutableListOf()
-                metadata += entries[item]?.toCommitMessage("Updated $item")
+            newName = readLineOptional(
+                "Category Name ($item): ",
+                item,
+                validation = { it.isNotEmpty() && !entries.containsKey(it) }
+            )
+
+            if (newName.isNotEmpty() && newName != item) {
+                entries[newName] = entries[item] ?: mutableListOf()
+                entries.remove(item)
+                metadata += "Category name updated from '$item' to '$newName'.\n"
             }
         }
         if (!isFlattened()) {
