@@ -495,7 +495,11 @@ class ResumeManager {
 
                 }
             }
-            SectionType.TECHNICAL_SKILLS -> {}
+
+            SectionType.TECHNICAL_SKILLS -> {
+                resumeData.reorderTechnicalSkills()
+            }
+
             SectionType.CERTIFICATIONS -> {}
         }
     }

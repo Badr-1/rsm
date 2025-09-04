@@ -531,4 +531,26 @@ data class ResumeData(
             hint = "move using arrow keys"
         ) as MutableList<Project>
     }
+
+    fun reorderTechnicalSkills() {
+        println("Entered reorderTechnicalSkills")
+        if (technicalSkills.isFlattened()) {
+            println("Technical skills are flattened. Reordering not applicable.")
+            return
+        } else {
+            val categories = technicalSkills.entries.keys.toList()
+            val reorderedCategories = KInquirer.promptOrderableListObject(
+                "Reorder Technical Skill Categories:",
+                categories.map { Choice(it, it) }.toMutableList(),
+                hint = "move using arrow keys"
+            )
+            val newEntries = linkedMapOf<String, MutableList<String>>()
+            reorderedCategories.forEach { category ->
+                technicalSkills.entries[category]?.let { skills ->
+                    newEntries[category] = skills
+                }
+            }
+            technicalSkills.entries = newEntries
+        }
+    }
 }
