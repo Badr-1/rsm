@@ -8,6 +8,7 @@ import com.github.kinquirer.core.Choice
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.encodeToString
 import models.Certification
+import models.Certification.Companion.reorganize
 import models.Education
 import models.Experience
 import models.PersonalInfo
@@ -198,6 +199,7 @@ class ResumeManager {
             SectionType.CERTIFICATIONS -> {
                 metaData += "Updated certifications\n\n"
                 resumeData.certifications.filter { it.toString() in itemsToUpdate }.forEach { metaData += it.update() }
+                resumeData.certifications.reorganize()
             }
         }
         saveAndCommit(resumeData, git, metaData)
@@ -267,6 +269,7 @@ class ResumeManager {
                 resumeData.certifications.addAll(position, Certification.collect("add new certification entry:").apply {
                     metaData += this.toCommitMessage("Added new certifications\n\n")
                 })
+                resumeData.certifications.reorganize()
             }
         }
 
@@ -500,7 +503,9 @@ class ResumeManager {
                 resumeData.reorderTechnicalSkills()
             }
 
-            SectionType.CERTIFICATIONS -> {}
+            SectionType.CERTIFICATIONS -> {
+                resumeData.reorderCertifications()
+            }
         }
     }
 

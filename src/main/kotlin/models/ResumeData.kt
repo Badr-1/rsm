@@ -10,6 +10,7 @@ import utils.Utils.readLineOptional
 import utils.Utils.readLineRequired
 import utils.Utils.toCommitMessage
 import java.util.Collections.emptyList
+import kotlin.collections.flatten
 
 enum class SectionType(val displayName: String, val isFixed: Boolean = false) {
     PERSONAL_INFO("Personal Info", true),
@@ -467,7 +468,14 @@ data class Certification(
                 val addMore = KInquirer.promptConfirm("Add another certification entry?", default = false)
             } while (addMore)
 
-            return certificationsList
+            return certificationsList.reorganize()
+        }
+
+        fun MutableList<Certification>.reorganize(): MutableList<Certification> {
+            val organized = this.groupBy { it.issuingOrganization }.flatMap { it.value }.toMutableList()
+            this.clear()
+            this.addAll(organized)
+            return this
         }
     }
 
@@ -552,5 +560,13 @@ data class ResumeData(
             }
             technicalSkills.entries = newEntries
         }
+    }
+
+    fun reorderCertifications() {
+        certifications = KInquirer.promptOrderableListObject(
+            "Reorder Certification Entries:",
+            certifications.groupBy { it.issuingOrganization }.map { Choice(it.key, it) }.toMutableList(),
+            hint = "move using arrow keys"
+        ).flatMap { it.value }.toMutableList()
     }
 }
