@@ -34,13 +34,14 @@ object Utils {
         }
     }
 
-    fun readLineRequired(prompt: String): String {
+    fun readLineRequired(prompt: String, validation: (String) -> Boolean = { true }): String {
         return KInquirer.promptInput(message = prompt, hint = "(required)", validation = { it.isNotEmpty() })
             .escapeLatexSpecialChars()
     }
 
-    fun readLineOptional(prompt: String, default: String = ""): String {
-        return KInquirer.promptInput(message = prompt, hint = "(optional)", default = default).escapeLatexSpecialChars()
+    fun readLineOptional(prompt: String, default: String = "", validation: (String) -> Boolean = { true }): String {
+        return KInquirer.promptInput(message = prompt, hint = "(optional)", default = default, validation = validation)
+            .escapeLatexSpecialChars()
     }
 
     fun promptSection(message: String, choices: List<Choice<SectionType>>): SectionType {
