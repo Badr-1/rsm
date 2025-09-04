@@ -14,7 +14,6 @@ import models.PersonalInfo
 import models.Project
 import models.ResumeData
 import models.SectionType
-import models.TechnicalSkillType
 import models.TechnicalSkills
 import java.io.File
 import org.eclipse.jgit.api.Git
@@ -61,8 +60,12 @@ class ResumeManager {
                     SectionType.EDUCATION -> resumeData.education = Education.collect("\n🎓 Education:")
                     SectionType.EXPERIENCE -> resumeData.experience = Experience.collect("\n💼 Experience:")
                     SectionType.PROJECTS -> resumeData.projects = Project.collect("\n🚀 Projects:")
-                    SectionType.TECHNICAL_SKILLS -> resumeData.technicalSkills =
-                        TechnicalSkills.collect("\n🔧 Technical Skills:")
+                    SectionType.TECHNICAL_SKILLS -> {
+                        val isCategorized =
+                            KInquirer.promptConfirm("Do you want to categorize your technical skills?", default = true)
+                        resumeData.technicalSkills =
+                            TechnicalSkills.collect("\n🔧 Technical Skills:", isCategorized)
+                    }
 
                     SectionType.CERTIFICATIONS -> resumeData.certifications =
                         Certification.collect("\n🏆 Certifications:")
@@ -145,7 +148,7 @@ class ResumeManager {
                 where = section,
                 resumeData = resumeData,
                 message = "Select technical skill to update:",
-                choices = TechnicalSkillType.entries.map { skillType -> skillType.name.lowercase() },
+                choices = resumeData.technicalSkills.entries.keys.toList(),
             )
 
             SectionType.CERTIFICATIONS -> updateWhatAtWhere(
@@ -189,7 +192,7 @@ class ResumeManager {
 
             SectionType.TECHNICAL_SKILLS -> {
                 metaData += "Updated technical skills\n\n"
-                resumeData.technicalSkills.update(itemsToUpdate.map { TechnicalSkillType.valueOf(it.uppercase()) })
+                metaData += resumeData.technicalSkills.update(itemsToUpdate)
             }
 
             SectionType.CERTIFICATIONS -> {
@@ -246,11 +249,13 @@ class ResumeManager {
 
             SectionType.TECHNICAL_SKILLS -> {
                 metaData = "Added new technical skills\n\n"
-                resumeData.technicalSkills += TechnicalSkills.collect("add new technical skills:").apply {
-                    metaData += languages.toCommitMessage("Languages") +
-                            frameworks.toCommitMessage("Frameworks") +
-                            technologies.toCommitMessage("Technologies") +
-                            libraries.toCommitMessage("Libraries")
+                resumeData.technicalSkills += TechnicalSkills.collect(
+                    "add new technical skills:",
+                    !resumeData.technicalSkills.isFlattened()
+                ).apply {
+                    entries.forEach { (category, skills) ->
+                        metaData += skills.toCommitMessage(category)
+                    }
                 }
             }
 
@@ -317,7 +322,7 @@ class ResumeManager {
                     where = section,
                     resumeData = resumeData,
                     message = "Select technical skill to remove:",
-                    choices = TechnicalSkillType.entries.map { skillType -> skillType.name.lowercase() },
+                    choices = resumeData.technicalSkills.entries.keys.toList(),
                 )
             }
 
@@ -365,7 +370,7 @@ class ResumeManager {
 
             SectionType.TECHNICAL_SKILLS -> {
                 metadata += "Removed technical skills\n\n"
-                metadata += resumeData.technicalSkills.remove(removedItems.map { TechnicalSkillType.valueOf(it.uppercase()) })
+                metadata += resumeData.technicalSkills.remove(removedItems)
             }
 
             SectionType.CERTIFICATIONS -> {
@@ -399,12 +404,7 @@ class ResumeManager {
                     education = data.education.filter { it.toString().isNotBlank() }.toMutableList(),
                     experience = data.experience.filter { it.toString().isNotBlank() }.toMutableList(),
                     projects = data.projects.filter { it.toString().isNotBlank() }.toMutableList(),
-                    technicalSkills = data.technicalSkills.copy(
-                        languages = data.technicalSkills.languages.filter { it.isNotBlank() }.toMutableList(),
-                        frameworks = data.technicalSkills.frameworks.filter { it.isNotBlank() }.toMutableList(),
-                        technologies = data.technicalSkills.technologies.filter { it.isNotBlank() }.toMutableList(),
-                        libraries = data.technicalSkills.libraries.filter { it.isNotBlank() }.toMutableList()
-                    )
+                    technicalSkills = data.technicalSkills
                 )
             }
 

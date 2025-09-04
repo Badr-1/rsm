@@ -20,12 +20,6 @@ enum class SectionType(val displayName: String, val isFixed: Boolean = false) {
     CERTIFICATIONS("Certifications"),
 }
 
-enum class TechnicalSkillType {
-    LANGUAGES,
-    FRAMEWORKS,
-    TECHNOLOGIES,
-    LIBRARIES
-}
 
 @Serializable
 data class PersonalInfo(
@@ -319,175 +313,132 @@ data class Project(
 
 @Serializable
 data class TechnicalSkills(
-    var languages: MutableList<String> = emptyList(),
-    var frameworks: MutableList<String> = emptyList(),
-    var technologies: MutableList<String> = emptyList(),
-    var libraries: MutableList<String> = emptyList()
+    var entries: MutableMap<String, MutableList<String>> = mutableMapOf()
 ) {
     companion object {
-        fun collect(prompt: String): TechnicalSkills {
+        fun collect(prompt: String, isCategorized: Boolean): TechnicalSkills {
             println(prompt)
+            val entries = mutableMapOf<String, MutableList<String>>()
 
-            val languages =
-                readLineOptional("Languages (comma-separated): ").split(",").map { it.trim() }
-                    .filter { it.isNotEmpty() }.toMutableList()
-            val frameworks =
-                readLineOptional("Frameworks (comma-separated): ").split(",").map { it.trim() }
-                    .filter { it.isNotEmpty() }.toMutableList()
-            val technologies =
-                readLineOptional("Technologies (comma-separated): ").split(",").map { it.trim() }
-                    .filter { it.isNotEmpty() }.toMutableList()
-            val libraries =
-                readLineOptional("Libraries (comma-separated): ").split(",").map { it.trim() }
-                    .filter { it.isNotEmpty() }.toMutableList()
-
-            return TechnicalSkills(languages, frameworks, technologies, libraries)
+            if (isCategorized) {
+                do {
+                    val category = readLineRequired("Category Name (e.g., Languages, Frameworks): ")
+                    val skills = readLineRequired("Skills in $category (comma-separated): ")
+                        .split(",").map { it.trim() }.filter { it.isNotEmpty() }.toMutableList()
+                    entries[category] = skills
+                } while (KInquirer.promptConfirm("Add another category?", default = false))
+            } else {
+                val skills = readLineRequired("Technical Skills (comma-separated): ")
+                    .split(",").map { it.trim() }.filter { it.isNotEmpty() }.toMutableList()
+                entries["Technical Skills"] = skills
+            }
+            return TechnicalSkills(entries)
         }
+
     }
 
-    fun remove(items: List<TechnicalSkillType>): String {
+    fun remove(items: List<String>): String {
         var metaData = ""
         items.forEach { item ->
-            when (item) {
-                TechnicalSkillType.LANGUAGES -> {
-                    val removedLanguages = KInquirer.promptCheckbox(
-                        message = "Select language to remove:",
-                        choices = languages,
-                        hint = "pick using spacebar"
-                    )
-                    languages.removeAll(removedLanguages)
-                    metaData += removedLanguages.toCommitMessage("Removed languages")
-                }
 
-                TechnicalSkillType.FRAMEWORKS -> {
-                    val removedFrameworks = KInquirer.promptCheckbox(
-                        message = "Select framework to remove:",
-                        choices = frameworks,
-                        hint = "pick using spacebar"
-                    )
-                    frameworks.removeAll(removedFrameworks)
-                    metaData += removedFrameworks.toCommitMessage("Removed frameworks")
-                }
-
-                TechnicalSkillType.TECHNOLOGIES -> {
-                    val removedTechnologies = KInquirer.promptCheckbox(
-                        message = "Select technology to remove:",
-                        choices = technologies,
-                        hint = "pick using spacebar"
-                    )
-                    technologies.removeAll(removedTechnologies)
-                    metaData += removedTechnologies.toCommitMessage("Removed technologies")
-                }
-
-                TechnicalSkillType.LIBRARIES -> {
-                    val removedLibraries = KInquirer.promptCheckbox(
-                        message = "Select library to remove:",
-                        choices = libraries,
-                        hint = "pick using spacebar"
-                    )
-                    libraries.removeAll(removedLibraries)
-                    metaData += removedLibraries.toCommitMessage("Removed libraries")
-                }
+            val skillsToRemove = KInquirer.promptCheckbox(
+                message = "Select skills to remove from $item:",
+                choices = entries.getOrDefault(item, mutableListOf()),
+                hint = "pick using spacebar"
+            )
+            entries[item]?.removeAll(skillsToRemove)
+            if (entries[item]?.isEmpty() == true) {
+                entries.remove(item)
             }
+            metaData += skillsToRemove.toCommitMessage("Removed from $item")
         }
         return metaData
     }
 
-    fun update(items: List<TechnicalSkillType>): String {
+    fun update(items: List<String>): String {
         var metadata = ""
-
         items.forEach { item ->
-            when (item) {
-                TechnicalSkillType.LANGUAGES -> {
-                    KInquirer.promptCheckbox(
-                        "Current Languages (choose what to keep)",
-                        choices = languages,
-                        hint = "pick using spacebar"
-                    ).let { selectedLanguages ->
-                        if (selectedLanguages.isNotEmpty()) {
-                            languages.clear()
-                            languages.addAll(selectedLanguages)
-                        }
-                    }
-                    languages =
-                        readLineOptional("New Languages (comma-separated): ").split(",").map { it.trim() }
-                            .filter { it.isNotEmpty() }.toMutableList()
-                    metadata += languages.toCommitMessage("Updated Languages")
+            KInquirer.promptCheckbox(
+                "Current $item (choose what to keep)",
+                choices = entries.getOrDefault(item, mutableListOf()),
+                hint = "pick using spacebar"
+            ).let { selectedSkills ->
+                if (selectedSkills.isNotEmpty()) {
+                    entries[item]?.clear()
+                    entries[item]?.addAll(selectedSkills)
                 }
-
-                TechnicalSkillType.FRAMEWORKS -> {
-                    KInquirer.promptCheckbox(
-                        "Current Frameworks (choose what to keep)",
-                        choices = frameworks,
-                        hint = "pick using spacebar"
-                    )
-
-                        .let { selectedFrameworks ->
-                            if (selectedFrameworks.isNotEmpty()) {
-                                frameworks.clear()
-                                frameworks.addAll(selectedFrameworks)
-                            }
-                        }
-
-                    frameworks =
-                        readLineOptional("New Frameworks (comma-separated): ").split(",").map { it.trim() }
-                            .filter { it.isNotEmpty() }.toMutableList()
-                    metadata += frameworks.toCommitMessage("Update Frameworks")
-                }
-
-                TechnicalSkillType.TECHNOLOGIES -> {
-                    KInquirer.promptCheckbox(
-                        "Current Technologies (choose what to keep)",
-                        choices = technologies,
-                        hint = "pick using spacebar"
-                    )
-
-                        .let { selectedFrameworks ->
-                            if (selectedFrameworks.isNotEmpty()) {
-                                technologies.clear()
-                                technologies.addAll(selectedFrameworks)
-                            }
-                        }
-
-                    technologies =
-                        readLineOptional("New Technologies (comma-separated): ").split(",").map { it.trim() }
-                            .filter { it.isNotEmpty() }.toMutableList()
-
-                    metadata += technologies.toCommitMessage("Updated Technologies")
-                }
-
-                TechnicalSkillType.LIBRARIES -> {
-                    KInquirer.promptCheckbox(
-                        "Current Libraries (choose what to keep)",
-                        choices = libraries,
-                        hint = "pick using spacebar"
-                    )
-
-                        .let { selectedLibraries ->
-                            if (selectedLibraries.isNotEmpty()) {
-                                libraries.clear()
-                                libraries.addAll(selectedLibraries)
-                            }
-                        }
-
-                    libraries =
-                        readLineOptional("New Libraries (comma-separated): ").split(",").map { it.trim() }
-                            .filter { it.isNotEmpty() }.toMutableList()
-                    metadata += libraries.toCommitMessage("Updated Libraries")
-                }
+                entries[item]?.addAll(readLineOptional("New $item (comma-separated): ").split(",").map { it.trim() }
+                    .filter { it.isNotEmpty() }.toMutableList())
+                entries[item] = entries[item]?.distinct()?.toMutableList() ?: mutableListOf()
+                metadata += entries[item]?.toCommitMessage("Updated $item")
             }
+        }
+        if (!isFlattened()) {
+            KInquirer.promptConfirm("Do you want to flatten your technical skills?", default = false)
+                .let { confirm ->
+                    if (confirm) {
+                        flatten()
+                        metadata += "Flattened technical skills into a single category."
+                    }
+                }
+        } else {
+            KInquirer.promptConfirm("Do you want to categorize your technical skills?", default = false)
+                .let { confirm ->
+                    if (confirm) {
+                        categorize()
+                        metadata += "Categorized technical skills."
+                    }
+                }
         }
 
         return metadata
     }
 
-    operator fun plus(other: TechnicalSkills): TechnicalSkills {
-        return TechnicalSkills(
-            languages = (languages + other.languages).distinct().toMutableList(),
-            frameworks = (frameworks + other.frameworks).distinct().toMutableList(),
-            technologies = (technologies + other.technologies).distinct().toMutableList(),
-            libraries = (libraries + other.libraries).distinct().toMutableList()
+    private fun flatten() {
+        if (entries.size > 1) {
+            val allSkills = entries.values.flatten().distinct()
+            entries.clear()
+            entries["Technical Skills"] = allSkills.toMutableList()
+        }
+    }
+
+    private fun categorize() {
+        val allSkills = entries.values.flatten().distinct().toMutableList()
+        entries.clear()
+        do {
+            val category = readLineRequired("Category Name (e.g., Languages, Frameworks): ")
+            val skills = KInquirer.promptCheckbox(
+                message = "Select skills to add to $category:",
+                choices = allSkills,
+                minNumOfSelection = 1,
+                hint = "pick using spacebar"
+            )
+            entries[category] = skills.toMutableList()
+            allSkills.removeAll(skills)
+
+        } while (allSkills.isNotEmpty() && KInquirer.promptConfirm(
+                "Add another category?",
+                default = false
+            )
         )
+        if (allSkills.isNotEmpty()) {
+            entries["Uncategorized"] = allSkills
+        }
+    }
+
+    operator fun plus(other: TechnicalSkills): TechnicalSkills {
+        other.entries.forEach { (category, skills) ->
+            if (entries.containsKey(category)) {
+                entries[category]?.addAll(skills)
+            } else {
+                entries[category] = skills.distinct().toMutableList()
+            }
+        }
+        return this
+    }
+
+    fun isFlattened(): Boolean {
+        return entries.size == 1 && entries.containsKey("Technical Skills")
     }
 }
 
@@ -566,6 +517,7 @@ data class ResumeData(
             hint = "move using arrow keys"
         ) as MutableList<Education>
     }
+
     fun reorderExperience() {
         experience = KInquirer.promptOrderableListObject(
             "Reorder Experience Entries:",
@@ -573,6 +525,7 @@ data class ResumeData(
             hint = "move using arrow keys"
         ) as MutableList<Experience>
     }
+
     fun reorderProjects() {
         projects = KInquirer.promptOrderableListObject(
             "Reorder Project Entries:",

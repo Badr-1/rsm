@@ -223,8 +223,8 @@ class LaTeXGenerator {
         }
     }
 
-    private fun generateTechnicalSkills(skills: TechnicalSkills): String {
-        if(skills.technologies.isEmpty() && skills.frameworks.isEmpty() && skills.languages.isEmpty() && skills.libraries.isEmpty())
+    private fun generateTechnicalSkills(technicalSkills: TechnicalSkills): String {
+        if (technicalSkills.entries.isEmpty())
             return ""
         return buildString {
             appendLine("%-----------PROGRAMMING SKILLS-----------")
@@ -234,22 +234,13 @@ class LaTeXGenerator {
 
             val skillCategories = mutableListOf<String>()
 
-            if (skills.languages.isNotEmpty()) {
-                skillCategories.add("\\textbf{Languages}{: ${skills.languages.joinToString(", ")}}")
+            technicalSkills.entries.forEach { (category, skills) ->
+                if (skills.isNotEmpty() && technicalSkills.isFlattened()) { // uncategorized skills
+                    skillCategories.add(skills.joinToString(", "))
+                } else if (skills.isNotEmpty()) { // categorized skills
+                    skillCategories.add("\\textbf{$category}: ${skills.joinToString(", ")}")
+                }
             }
-
-            if (skills.frameworks.isNotEmpty()) {
-                skillCategories.add("\\textbf{Frameworks}{: ${skills.frameworks.joinToString(", ")}}")
-            }
-
-            if (skills.technologies.isNotEmpty()) {
-                skillCategories.add("\\textbf{Technologies}{: ${skills.technologies.joinToString(", ")}}")
-            }
-
-            if (skills.libraries.isNotEmpty()) {
-                skillCategories.add("\\textbf{Libraries}{: ${skills.libraries.joinToString(", ")}}")
-            }
-
             appendLine("     ${skillCategories.joinToString(" \\\\\n     ")}")
             appendLine("    }}")
             appendLine(" \\end{itemize}")
