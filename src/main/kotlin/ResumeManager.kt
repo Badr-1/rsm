@@ -387,7 +387,7 @@ class ResumeManager {
 
     fun generateLatexFile() {
         if (configFile.exists()) {
-            val latex = LaTeXGenerator().generate(loadConfig())
+            val latex = LaTeXGenerator.generate(loadConfig())
             resumeFile.writeText(latex)
             println("📄 Generated resume.tex")
         } else {

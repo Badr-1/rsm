@@ -9,7 +9,7 @@ import models.TechnicalSkills
 
 
 
-class LaTeXGenerator {
+object LaTeXGenerator {
 
     fun generate(data: ResumeData): String {
         return buildString {
