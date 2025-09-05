@@ -28,7 +28,7 @@ val resumeFile = File("resume.tex")
 val ignoreFile = File(".gitignore")
 val pdfFile = File("resume.pdf")
 
-class ResumeManager {
+object ResumeManager {
     private val json = Json { prettyPrint = true }
 
     fun initializeResume() {

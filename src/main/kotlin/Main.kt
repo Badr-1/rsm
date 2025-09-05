@@ -3,9 +3,6 @@ import com.github.ajalt.clikt.core.subcommands
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
-import com.github.kinquirer.KInquirer
-import com.github.kinquirer.components.promptList
-import com.github.kinquirer.components.promptListObject
 import com.github.kinquirer.core.Choice
 import models.SectionType
 import utils.FileUtils
@@ -23,8 +20,7 @@ class ResumeCLI : CliktCommand(name = "rsm") {
 
 class InitCommand : CliktCommand(name = "init", help = "Initialize a new resume repository") {
     override fun run() {
-        val resumeManager = ResumeManager()
-        resumeManager.initializeResume()
+        ResumeManager.initializeResume()
         rsm.echoFormattedHelp()
     }
 }
@@ -38,14 +34,13 @@ class ReorderCommand : CliktCommand(name = "reorder", help = "Reorder items in a
 
     override fun run() {
         val target = promptTargetBranch("Select the target branch to reorder this in:")
-        ResumeManager().reorderSections(target, section)
+        ResumeManager.reorderSections(target, section)
     }
 }
 
 class GenerateCommand : CliktCommand(name = "generate", help = "Generate LaTeX resume from configuration") {
     override fun run() {
-        val resumeManager = ResumeManager()
-        resumeManager.generateLatexFile()
+        ResumeManager.generateLatexFile()
     }
 }
 
@@ -53,8 +48,7 @@ class RoleCommand : CliktCommand(name = "role", help = "Create a new role-specif
     private val roleName by argument(help = "Name of the role/position")
 
     override fun run() {
-        val resumeManager = ResumeManager()
-        resumeManager.createRoleBranch(roleName)
+        ResumeManager.createRoleBranch(roleName)
     }
 }
 
@@ -64,7 +58,7 @@ class AddCommand : CliktCommand(name = "add", help = "Add content to resume") {
             "What section do you want to add content to?",
             SectionType.entries.filter { !it.isFixed }.map { Choice(it.displayName, it) })
         val target = promptTargetBranch("Select the target branch to add this to:")
-        ResumeManager().addToSection(section, target)
+        ResumeManager.addToSection(section, target)
     }
 }
 
@@ -75,7 +69,7 @@ class RemoveCommand : CliktCommand(name = "remove", help = "Remove content from 
             "What section do you want to remove content from?",
             SectionType.entries.filter { !it.isFixed }.map { Choice(it.displayName, it) })
         val target = promptTargetBranch("Select the target branch to remove this from:")
-        ResumeManager().removeFromSection(section, target)
+        ResumeManager.removeFromSection(section, target)
     }
 }
 
@@ -87,7 +81,7 @@ class UpdateCommand : CliktCommand(name = "update", help = "Update resume conten
             SectionType.entries.map { Choice(it.displayName, it) })
 
         val target = promptTargetBranch("Select the target branch to update this at:")
-        ResumeManager().updateAtSection(section, target)
+        ResumeManager.updateAtSection(section, target)
     }
 }
 
@@ -104,8 +98,7 @@ class CompileCommand : CliktCommand(name = "compile", help = "Compile LaTeX resu
 
     override fun run() {
         if (generate) {
-            val resumeManager = ResumeManager()
-            resumeManager.generateLatexFile()
+            ResumeManager.generateLatexFile()
         }
 
         if (!resumeFile.exists()) {
