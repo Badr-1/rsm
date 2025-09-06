@@ -4,16 +4,14 @@ import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 
-val rsm = ResumeCLI()
-
-class ResumeCLI : CliktCommand(name = "rsm") {
+object Rsm : CliktCommand(name = "rsm") {
     override fun run() = Unit
 }
 
 class InitCommand : CliktCommand(name = "init", help = "Initialize a new resume repository") {
     override fun run() {
         ResumeManager.initializeResume()
-        rsm.echoFormattedHelp()
+        Rsm.echoFormattedHelp()
     }
 }
 
@@ -84,7 +82,7 @@ class CompileCommand : CliktCommand(name = "compile", help = "Compile LaTeX resu
 }
 
 
-fun main(args: Array<String>) = rsm
+fun main(args: Array<String>) = Rsm
     .subcommands(
         InitCommand(),
         GenerateCommand(),
