@@ -1,24 +1,37 @@
 import com.github.kinquirer.KInquirer
-import com.github.kinquirer.components.*
+import com.github.kinquirer.components.promptCheckbox
+import com.github.kinquirer.components.promptCheckboxObject
+import com.github.kinquirer.components.promptConfirm
+import com.github.kinquirer.components.promptOrderableListObject
 import com.github.kinquirer.core.Choice
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import models.*
+import models.Certification
 import models.Certification.Companion.reorder
 import models.Certification.Companion.reorganize
+import models.Education
+import models.Experience
+import models.PersonalInfo
+import models.Project
+import models.ResumeData
+import models.SectionType
+import models.TechnicalSkills
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.errors.EmptyCommitException
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
-import utils.*
+import utils.FileUtils
 import utils.Utils.compilePdf
 import utils.Utils.promptSection
 import utils.Utils.promptSectionAndTargetBranch
 import utils.Utils.promptTargetBranch
 import utils.Utils.reorder
 import utils.Utils.toCommitMessage
+import utils.configFile
+import utils.ignoreFile
+import utils.pdfFile
+import utils.resumeFile
 import java.awt.Desktop
 import java.io.File
-
 
 object ResumeManager {
     private val json = Json { prettyPrint = true }
@@ -27,16 +40,14 @@ object ResumeManager {
         val git = Git.init().setDirectory(File(".")).setInitialBranch("main").call()
 
         if (!configFile.exists()) {
-
             ignoreFile.writeText(
                 """
             # Ignore generated files
             *
             !.gitignore
             !${configFile.name}
-            """.trimIndent()
+                """.trimIndent()
             )
-
 
             val resumeData = ResumeData()
             resumeData.personalInfo = PersonalInfo.collect()
@@ -44,8 +55,8 @@ object ResumeManager {
             val sectionsToFill = KInquirer.promptCheckboxObject(
                 message = "choose sections you want to fill",
                 choices = SectionType.entries.filter { !it.isFixed }
-                    .map { Choice(it.displayName, it) })
-
+                    .map { Choice(it.displayName, it) }
+            )
 
             sectionsToFill.forEach { sectionToFill ->
                 when (sectionToFill) {
@@ -60,8 +71,9 @@ object ResumeManager {
                             TechnicalSkills.collect("\n🔧 Technical Skills:", isCategorized)
                     }
 
-                    SectionType.CERTIFICATIONS -> resumeData.certifications =
-                        Certification.collect("\n🏆 Certifications:")
+                    SectionType.CERTIFICATIONS ->
+                        resumeData.certifications =
+                            Certification.collect("\n🏆 Certifications:")
                 }
             }
 
@@ -72,15 +84,12 @@ object ResumeManager {
             )
             resumeData.orderedSections = orderedSections.ifEmpty { SectionType.entries.filter { !it.isFixed } }
 
-
             saveConfig(resumeData)
-
 
             git.add().addFilepattern(".").call()
             git.commit().setMessage("Initial resume setup").call()
 
             println("✅ Resume initialized successfully!")
-
         } else {
             println("📄 Resume configuration already exists.")
         }
@@ -90,13 +99,11 @@ object ResumeManager {
         try {
             val git = openGitRepository()
 
-
             git.checkout().setName("main").call()
             git.checkout().setCreateBranch(true).setName(roleName).call()
 
             println("✅ Created branch '$roleName' for role-specific customization")
             git.checkout().setName("main").call()
-
         } catch (e: Exception) {
             println("❌ Error creating branch: ${e.message}")
         }
@@ -113,35 +120,47 @@ object ResumeManager {
         val resumeData = loadConfig()
         var metaData = ""
         when (section) {
-            SectionType.PERSONAL_INFO -> {/*can't add to this section*/
+            SectionType.PERSONAL_INFO -> { /*can't add to this section*/
             }
 
             SectionType.EDUCATION -> {
-                resumeData.education.addAll(0, Education.collect("add new education entry:").apply {
-                    metaData += this.toCommitMessage("Added new education\n\n")
-                })
+                resumeData.education.addAll(
+                    0,
+                    Education.collect("add new education entry:").apply {
+                        metaData += this.toCommitMessage("Added new education\n\n")
+                    }
+                )
                 println("New Entries are Added at the top of the Section")
-                if (resumeData.education.size > 1 && KInquirer.promptConfirm("Do You want to change order?", false))
+                if (resumeData.education.size > 1 && KInquirer.promptConfirm("Do You want to change order?", false)) {
                     resumeData.education.reorder(false)
+                }
             }
 
             SectionType.EXPERIENCE -> {
-                resumeData.experience.addAll(0, Experience.collect("add new experience entry:").apply {
-                    metaData += this.toCommitMessage("Added new experiences\n\n")
-                })
+                resumeData.experience.addAll(
+                    0,
+                    Experience.collect("add new experience entry:").apply {
+                        metaData += this.toCommitMessage("Added new experiences\n\n")
+                    }
+                )
                 println("New Entries are Added at the top of the Section")
-                if (resumeData.experience.size > 1 && KInquirer.promptConfirm("Do You want to change order?", false))
+                if (resumeData.experience.size > 1 && KInquirer.promptConfirm("Do You want to change order?", false)) {
                     resumeData.experience.reorder(false)
+                }
             }
 
             SectionType.PROJECTS -> {
                 metaData = "\n\n"
-                resumeData.projects.addAll(0, Project.collect("add new project entry:").apply {
-                    metaData += this.toCommitMessage("Added new projects\n\n")
-                })
+                resumeData.projects.addAll(
+                    0,
+                    Project.collect("add new project entry:").apply {
+                        metaData += this.toCommitMessage("Added new projects\n\n")
+                    }
+                )
                 println("New Entries are Added at the top of the Section")
-                if (resumeData.projects.size > 1 && KInquirer.promptConfirm("Do You want to change order?", false))
+                if (resumeData.projects.size > 1 && KInquirer.promptConfirm("Do You want to change order?", false)) {
                     resumeData.projects.reorder(false)
+                }
             }
 
             SectionType.TECHNICAL_SKILLS -> {
@@ -157,12 +176,20 @@ object ResumeManager {
             }
 
             SectionType.CERTIFICATIONS -> {
-                resumeData.certifications.addAll(0,Certification.collect("add new certification entry:").apply {
-                    metaData += this.toCommitMessage("Added new certifications\n\n")
-                })
+                resumeData.certifications.addAll(
+                    0,
+                    Certification.collect("add new certification entry:").apply {
+                        metaData += this.toCommitMessage("Added new certifications\n\n")
+                    }
+                )
                 println("New Entries are Added at the top of the Section")
-                if (resumeData.certifications.size > 1 && KInquirer.promptConfirm("Do You want to change order?", false))
+                if (resumeData.certifications.size > 1 && KInquirer.promptConfirm(
+                        "Do You want to change order?",
+                        false
+                    )
+                ) {
                     resumeData.certifications.reorder(false)
+                }
             }
         }
         saveConfig(resumeData)
@@ -188,7 +215,8 @@ object ResumeManager {
                 section,
                 resumeData,
                 "Select education entry to update:",
-                resumeData.education.map { it.toString() })
+                resumeData.education.map { it.toString() }
+            )
 
             SectionType.EXPERIENCE -> updateWhatAtWhere(
                 section,
@@ -208,7 +236,7 @@ object ResumeManager {
                 where = section,
                 resumeData = resumeData,
                 message = "Select technical skill to update:",
-                choices = resumeData.technicalSkills.entries.keys.toList(),
+                choices = resumeData.technicalSkills.entries.keys.toList()
             )
 
             SectionType.CERTIFICATIONS -> updateWhatAtWhere(
@@ -230,7 +258,7 @@ object ResumeManager {
             KInquirer.promptCheckbox(message, choices, hint = "pick using spacebar")
         var metaData = ""
         when (where) {
-            SectionType.PERSONAL_INFO -> {/*handled earlier*/
+            SectionType.PERSONAL_INFO -> { /*handled earlier*/
             }
 
             SectionType.EDUCATION -> {
@@ -274,7 +302,7 @@ object ResumeManager {
         val resumeData = loadConfig()
 
         when (section) {
-            SectionType.PERSONAL_INFO -> {/*should not remove from this section*/
+            SectionType.PERSONAL_INFO -> { /*should not remove from this section*/
             }
 
             SectionType.EDUCATION -> {
@@ -282,7 +310,7 @@ object ResumeManager {
                     where = section,
                     resumeData = resumeData,
                     message = "Select education entry to remove:",
-                    choices = resumeData.education.map { education -> education.toString() },
+                    choices = resumeData.education.map { education -> education.toString() }
                 )
             }
 
@@ -291,7 +319,7 @@ object ResumeManager {
                     where = section,
                     resumeData = resumeData,
                     message = "Select experience entry to remove:",
-                    choices = resumeData.experience.map { experience -> experience.toString() },
+                    choices = resumeData.experience.map { experience -> experience.toString() }
                 )
             }
 
@@ -300,7 +328,7 @@ object ResumeManager {
                     where = section,
                     resumeData = resumeData,
                     message = "Select project to remove:",
-                    choices = resumeData.projects.map { project -> project.toString() },
+                    choices = resumeData.projects.map { project -> project.toString() }
                 )
             }
 
@@ -309,7 +337,7 @@ object ResumeManager {
                     where = section,
                     resumeData = resumeData,
                     message = "Select technical skill to remove:",
-                    choices = resumeData.technicalSkills.entries.keys.toList(),
+                    choices = resumeData.technicalSkills.entries.keys.toList()
                 )
             }
 
@@ -318,7 +346,7 @@ object ResumeManager {
                     where = section,
                     resumeData = resumeData,
                     message = "Select certification to remove:",
-                    choices = resumeData.certifications.map { certification -> certification.toString() },
+                    choices = resumeData.certifications.map { certification -> certification.toString() }
                 )
             }
         }
@@ -329,13 +357,13 @@ object ResumeManager {
         where: SectionType,
         resumeData: ResumeData,
         message: String,
-        choices: List<String>,
+        choices: List<String>
     ) {
         val removedItems =
             KInquirer.promptCheckbox(message, choices, minNumOfSelection = 1, hint = "pick using spacebar")
         var metadata = ""
         when (where) {
-            SectionType.PERSONAL_INFO -> {/*handled earlier*/
+            SectionType.PERSONAL_INFO -> { /*handled earlier*/
             }
 
             SectionType.EDUCATION -> {
@@ -447,7 +475,6 @@ object ResumeManager {
                     technicalSkills = data.technicalSkills
                 )
             }
-
         } else {
             ResumeData()
         }
@@ -480,7 +507,6 @@ object ResumeManager {
             println("❌ resume.tex not found. Run 'resume init' first.")
             return
         }
-
 
         val errors = FileUtils.validateLatexFile(resumeFile)
         if (errors.isNotEmpty()) {
@@ -541,5 +567,4 @@ object ResumeManager {
             }
         }
     }
-
 }

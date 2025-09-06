@@ -131,7 +131,6 @@ data class TechnicalSkills(
             )
             entries[category] = skills.toMutableList()
             allSkills.removeAll(skills)
-
         } while (allSkills.isNotEmpty() && KInquirer.promptConfirm(
                 "Add another category?",
                 default = false
@@ -154,6 +153,6 @@ data class TechnicalSkills(
     }
 
     fun isFlattened(): Boolean {
-        return entries.isEmpty() ||(entries.size == 1 && entries.containsKey("Technical Skills"))
+        return entries.isEmpty() || (entries.size == 1 && entries.containsKey("Technical Skills"))
     }
 }

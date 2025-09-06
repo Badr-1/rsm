@@ -11,7 +11,7 @@ data class Education(
     var degree: String = "",
     var location: String = "",
     var graduationDate: String = "",
-    var gpa: String = "",
+    var gpa: String = ""
 ) {
     companion object {
         fun collect(prompt: String): MutableList<Education> {
@@ -31,7 +31,7 @@ data class Education(
                         degree = degree,
                         location = location,
                         graduationDate = graduationDate,
-                        gpa = gpa,
+                        gpa = gpa
                     )
                 )
 
@@ -72,7 +72,6 @@ data class Education(
         }
         return metaData
     }
-
 
     override fun toString(): String {
         return "$degree at $institution"

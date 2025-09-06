@@ -2,7 +2,6 @@ package models
 
 import kotlinx.serialization.Serializable
 
-
 @Serializable
 data class ResumeData(
     var orderedSections: List<SectionType> = SectionType.entries.filter { !it.isFixed },

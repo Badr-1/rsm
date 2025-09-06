@@ -29,5 +29,4 @@ object GitUtils {
             emptyList()
         }
     }
-
 }

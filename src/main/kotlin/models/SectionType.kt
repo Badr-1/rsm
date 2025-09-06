@@ -6,5 +6,5 @@ enum class SectionType(val displayName: String, val isFixed: Boolean = false) {
     EXPERIENCE("Experience"),
     PROJECTS("Projects"),
     TECHNICAL_SKILLS("Technical Skills"),
-    CERTIFICATIONS("Certifications"),
+    CERTIFICATIONS("Certifications")
 }

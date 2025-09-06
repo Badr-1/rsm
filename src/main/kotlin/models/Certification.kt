@@ -11,7 +11,7 @@ import utils.Utils
 data class Certification(
     var name: String = "",
     var issuingOrganization: String = "",
-    var issueDate: String = "",
+    var issueDate: String = ""
 ) {
     companion object {
         fun collect(prompt: String): MutableList<Certification> {

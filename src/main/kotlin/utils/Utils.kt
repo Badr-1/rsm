@@ -42,7 +42,8 @@ object Utils {
         return KInquirer.promptInput(
             message = prompt,
             hint = "(required)",
-            validation = { it.isNotEmpty() && validation(it) })
+            validation = { it.isNotEmpty() && validation(it) }
+        )
             .escapeLatexSpecialChars()
     }
 
@@ -56,15 +57,17 @@ object Utils {
     }
 
     fun promptSection(message: String, orderable: Boolean, predicate: (SectionType) -> Boolean): SectionType {
-        return if (orderable)
-            KInquirer.promptListObject(
-                message,
-                SectionType.entries.filter(predicate).map { Choice(it.displayName, it) })
-        else
+        return if (orderable) {
             KInquirer.promptListObject(
                 message,
                 SectionType.entries.filter(predicate).map { Choice(it.displayName, it) }
             )
+        } else {
+            KInquirer.promptListObject(
+                message,
+                SectionType.entries.filter(predicate).map { Choice(it.displayName, it) }
+            )
+        }
     }
 
     fun promptSectionAndTargetBranch(message: String, predicate: (SectionType) -> Boolean): Pair<SectionType, String> {
@@ -72,7 +75,6 @@ object Utils {
         val section = promptSection(message, false, predicate)
         return Pair(section, branch)
     }
-
 
     fun compilePdf(): Pair<Process, Int> {
         val process = ProcessBuilder("pdflatex", "resume.tex")
@@ -100,7 +102,7 @@ object Utils {
         this.clear()
         this.addAll(organized)
 
-        if (reorderBullets && OrderableBullets::class.java.isAssignableFrom(T::class.java))
+        if (reorderBullets && OrderableBullets::class.java.isAssignableFrom(T::class.java)) {
             forEach {
                 val reorderBulletsConfirm = KInquirer.promptConfirm(
                     "Do you want to reorder bullets for $it ?",
@@ -110,6 +112,6 @@ object Utils {
                     (it as OrderableBullets).reorderBullets()
                 }
             }
+        }
     }
-
 }

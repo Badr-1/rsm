@@ -15,7 +15,7 @@ data class Project(
     var technologies: String = "",
     var date: String = "",
     var bullets: List<String> = Collections.emptyList()
-): OrderableBullets {
+) : OrderableBullets {
     companion object {
         fun collect(prompt: String): MutableList<Project> {
             println(prompt)
@@ -86,7 +86,7 @@ data class Project(
     }
 
     override fun toString(): String {
-        return "$name (${date})"
+        return "$name ($date)"
     }
 
     override fun reorderBullets() {

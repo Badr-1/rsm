@@ -102,6 +102,6 @@ data class Experience(
     }
 
     override fun toString(): String {
-        return "$position at $company (${date})"
+        return "$position at $company ($date)"
     }
 }

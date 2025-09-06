@@ -66,14 +66,12 @@ object CompileCommand : CliktCommand(name = "compile", help = "Compile LaTeX res
     private val open by option("--open", "-o", help = "Open PDF after compilation").flag()
 
     override fun run() {
-        if (generate)
+        if (generate) {
             ResumeManager.generateLatexFile()
+        }
         ResumeManager.compileLateXtoPdf(clean, open)
     }
-
-
 }
-
 
 fun main(args: Array<String>) = Rsm
     .subcommands(

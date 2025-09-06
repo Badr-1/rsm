@@ -32,5 +32,4 @@ data class PersonalInfo(
             Utils.readLineOptional("LinkedIn URL${if (linkedin.isNotEmpty()) " ($linkedin): " else ": "}", linkedin)
         github = Utils.readLineOptional("GitHub URL${if (github.isNotEmpty()) " ($github): " else ": "}", github)
     }
-
 }

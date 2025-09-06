@@ -1,6 +1,7 @@
 plugins {
     kotlin("jvm") version "2.1.21"
     kotlin("plugin.serialization") version "1.9.0"
+    id("org.jlleitschuh.gradle.ktlint") version "11.6.1"
     application
 }
 
@@ -15,7 +16,7 @@ repositories {
 dependencies {
     implementation("com.github.kotlin-inquirer:kotlin-inquirer:0.1.0")
     implementation("org.fusesource.jansi:jansi:2.4.0")
-    implementation ("org.jline:jline:3.21.0")
+    implementation("org.jline:jline:3.21.0")
     implementation("com.github.ajalt.clikt:clikt:4.2.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")
     implementation("org.eclipse.jgit:org.eclipse.jgit:7.2.1.202505142326-r")
@@ -49,7 +50,6 @@ tasks.jar {
     duplicatesStrategy = DuplicatesStrategy.INCLUDE
 }
 
-
 tasks.register<Zip>("createDistribution") {
     dependsOn("jar")
     from("build/libs")
@@ -57,7 +57,10 @@ tasks.register<Zip>("createDistribution") {
         into("bin")
         filePermissions {
             unix("rwxr-xr-x")
-        } 
+        }
     }
-    archiveFileName.set("resume-cli-${version}.zip")
+    archiveFileName.set("resume-cli-$version.zip")
+}
+tasks.named("check") {
+    dependsOn("ktlintCheck")
 }

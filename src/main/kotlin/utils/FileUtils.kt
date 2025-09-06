@@ -7,7 +7,6 @@ val resumeFile = File("resume.tex")
 val ignoreFile = File(".gitignore")
 val pdfFile = File("resume.pdf")
 
-
 object FileUtils {
 
     fun validateLatexFile(file: File): List<String> {
@@ -31,7 +30,6 @@ object FileUtils {
         if (!content.contains("\\end{document}")) {
             errors.add("Missing \\end{document}")
         }
-
 
         val openBraces = content.count { it == '{' }
         val closeBraces = content.count { it == '}' }

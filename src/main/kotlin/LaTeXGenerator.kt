@@ -4,10 +4,13 @@ import models.Experience
 import models.PersonalInfo
 import models.Project
 import models.ResumeData
-import models.SectionType.*
+import models.SectionType.CERTIFICATIONS
+import models.SectionType.EDUCATION
+import models.SectionType.EXPERIENCE
+import models.SectionType.PERSONAL_INFO
+import models.SectionType.PROJECTS
+import models.SectionType.TECHNICAL_SKILLS
 import models.TechnicalSkills
-
-
 
 object LaTeXGenerator {
 
@@ -15,9 +18,9 @@ object LaTeXGenerator {
         return buildString {
             appendLine(generateHeader())
             appendLine(generatePersonalInfo(data.personalInfo))
-            data.orderedSections.forEach{ sectionType ->
-                when(sectionType) {
-                    PERSONAL_INFO -> {/*it's a fixed section*/ }
+            data.orderedSections.forEach { sectionType ->
+                when (sectionType) {
+                    PERSONAL_INFO -> { /*it's a fixed section*/ }
                     EDUCATION -> appendLine(generateEducation(data.education))
                     EXPERIENCE -> appendLine(generateExperience(data.experience))
                     PROJECTS -> appendLine(generateProjects(data.projects))
@@ -188,7 +191,7 @@ object LaTeXGenerator {
                 if (exp.bullets.isNotEmpty()) {
                     appendLine("      \\resumeItemListStart")
                     exp.bullets.forEach { bullet ->
-                        appendLine("        \\resumeItem{${bullet}}")
+                        appendLine("        \\resumeItem{$bullet}")
                     }
                     appendLine("      \\resumeItemListEnd")
                 }
@@ -213,7 +216,7 @@ object LaTeXGenerator {
                 if (project.bullets.isNotEmpty()) {
                     appendLine("          \\resumeItemListStart")
                     project.bullets.forEach { bullet ->
-                        appendLine("            \\resumeItem{${bullet}}")
+                        appendLine("            \\resumeItem{$bullet}")
                     }
                     appendLine("          \\resumeItemListEnd")
                 }
@@ -224,8 +227,9 @@ object LaTeXGenerator {
     }
 
     private fun generateTechnicalSkills(technicalSkills: TechnicalSkills): String {
-        if (technicalSkills.entries.isEmpty())
+        if (technicalSkills.entries.isEmpty()) {
             return ""
+        }
         return buildString {
             appendLine("%-----------PROGRAMMING SKILLS-----------")
             appendLine("\\section{Technical Skills}")
@@ -256,9 +260,9 @@ object LaTeXGenerator {
             val groupByOrg = certifications.groupBy { it.issuingOrganization }
             appendLine("  \\resumeSubHeadingListStart")
             groupByOrg.forEach { (org, certs) ->
-                if (certs.size == 1)
+                if (certs.size == 1) {
                     appendLine("\\resumeProjectHeading{\\textbf{$org} ${certs[0].name}}{${certs[0].issueDate}}")
-                else{
+                } else {
                     appendLine("\\resumeProjectHeading{\\textbf{$org}}{${certs.first().issueDate} -- ${certs.last().issueDate}}")
                     appendLine("\\resumeItemListStart")
                     certs.forEach { cert ->
@@ -267,7 +271,6 @@ object LaTeXGenerator {
                     appendLine("\\resumeItemListEnd")
                 }
             }
-
 
             appendLine("  \\resumeSubHeadingListEnd")
         }
@@ -290,6 +293,4 @@ object LaTeXGenerator {
             url
         }
     }
-
-
 }
