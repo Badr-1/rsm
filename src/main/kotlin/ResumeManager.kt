@@ -165,8 +165,8 @@ object ResumeManager {
                     resumeData.certifications.reorder(false)
             }
         }
-
-        saveAndCommit(resumeData, git, metaData)
+        saveConfig(resumeData)
+        commit(metaData)
         git.checkout().setName("main").call()
     }
 
@@ -180,18 +180,17 @@ object ResumeManager {
         when (section) {
             SectionType.PERSONAL_INFO -> {
                 resumeData.personalInfo.update()
-                saveAndCommit(resumeData, git, "Update Personal Information")
+                saveConfig(resumeData)
+                commit("Update Personal Information")
             }
 
             SectionType.EDUCATION -> updateWhatAtWhere(
-                git,
                 section,
                 resumeData,
                 "Select education entry to update:",
                 resumeData.education.map { it.toString() })
 
             SectionType.EXPERIENCE -> updateWhatAtWhere(
-                git,
                 section,
                 resumeData,
                 "Select experience entry to update:",
@@ -199,7 +198,6 @@ object ResumeManager {
             )
 
             SectionType.PROJECTS -> updateWhatAtWhere(
-                git,
                 section,
                 resumeData,
                 "Select project entry to update:",
@@ -207,7 +205,6 @@ object ResumeManager {
             )
 
             SectionType.TECHNICAL_SKILLS -> updateWhatAtWhere(
-                git = git,
                 where = section,
                 resumeData = resumeData,
                 message = "Select technical skill to update:",
@@ -215,7 +212,6 @@ object ResumeManager {
             )
 
             SectionType.CERTIFICATIONS -> updateWhatAtWhere(
-                git,
                 section,
                 resumeData,
                 "Select certification entry to update:",
@@ -225,7 +221,6 @@ object ResumeManager {
     }
 
     fun updateWhatAtWhere(
-        git: Git,
         where: SectionType,
         resumeData: ResumeData,
         message: String,
@@ -264,7 +259,8 @@ object ResumeManager {
                 resumeData.certifications.reorganize()
             }
         }
-        saveAndCommit(resumeData, git, metaData)
+        saveConfig(resumeData)
+        commit(metaData)
     }
 
     fun removeFromSection() {
@@ -283,7 +279,6 @@ object ResumeManager {
 
             SectionType.EDUCATION -> {
                 removeWhatFromWhere(
-                    git = git,
                     where = section,
                     resumeData = resumeData,
                     message = "Select education entry to remove:",
@@ -293,7 +288,6 @@ object ResumeManager {
 
             SectionType.EXPERIENCE -> {
                 removeWhatFromWhere(
-                    git = git,
                     where = section,
                     resumeData = resumeData,
                     message = "Select experience entry to remove:",
@@ -303,7 +297,6 @@ object ResumeManager {
 
             SectionType.PROJECTS -> {
                 removeWhatFromWhere(
-                    git = git,
                     where = section,
                     resumeData = resumeData,
                     message = "Select project to remove:",
@@ -313,7 +306,6 @@ object ResumeManager {
 
             SectionType.TECHNICAL_SKILLS -> {
                 removeWhatFromWhere(
-                    git = git,
                     where = section,
                     resumeData = resumeData,
                     message = "Select technical skill to remove:",
@@ -323,7 +315,6 @@ object ResumeManager {
 
             SectionType.CERTIFICATIONS -> {
                 removeWhatFromWhere(
-                    git = git,
                     where = section,
                     resumeData = resumeData,
                     message = "Select certification to remove:",
@@ -335,7 +326,6 @@ object ResumeManager {
     }
 
     private fun removeWhatFromWhere(
-        git: Git,
         where: SectionType,
         resumeData: ResumeData,
         message: String,
@@ -373,7 +363,8 @@ object ResumeManager {
                 metadata += removedItems.toCommitMessage("Removed certifications\n\n")
             }
         }
-        saveAndCommit(resumeData, git, metadata)
+        saveConfig(resumeData)
+        commit(metadata)
     }
 
     fun reorderSections() {
@@ -401,7 +392,8 @@ object ResumeManager {
 
             reorderSection(resumeData, section)
         }
-        saveAndCommit(resumeData, git, "Reordered sections")
+        saveConfig(resumeData)
+        commit("Reordered sections")
         git.checkout().setName("main").call()
     }
 
@@ -471,8 +463,8 @@ object ResumeManager {
         return Git(repo)
     }
 
-    private fun saveAndCommit(data: ResumeData, git: Git, message: String) {
-        saveConfig(data)
+    private fun commit(message: String) {
+        val git = openGitRepository()
         git.add().addFilepattern(".").call()
         try {
             git.commit().setAllowEmpty(false).setMessage(message).call()
