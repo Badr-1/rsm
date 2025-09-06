@@ -2,6 +2,12 @@ package utils
 
 import java.io.File
 
+val configFile = File("resume-config.json")
+val resumeFile = File("resume.tex")
+val ignoreFile = File(".gitignore")
+val pdfFile = File("resume.pdf")
+
+
 object FileUtils {
 
     fun validateLatexFile(file: File): List<String> {

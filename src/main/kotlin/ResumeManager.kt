@@ -22,11 +22,11 @@ import org.eclipse.jgit.api.errors.EmptyCommitException
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import utils.Utils.promptSection
 import utils.Utils.toCommitMessage
+import utils.configFile
+import utils.ignoreFile
+import utils.resumeFile
+import java.io.File
 
-val configFile = File("resume-config.json")
-val resumeFile = File("resume.tex")
-val ignoreFile = File(".gitignore")
-val pdfFile = File("resume.pdf")
 
 object ResumeManager {
     private val json = Json { prettyPrint = true }
