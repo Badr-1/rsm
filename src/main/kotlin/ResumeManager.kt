@@ -24,7 +24,7 @@ object ResumeManager {
     private val json = Json { prettyPrint = true }
 
     fun initializeResume() {
-        val git = Git.init().setDirectory(File(".")).call()
+        val git = Git.init().setDirectory(File(".")).setInitialBranch("main").call()
 
         if (!configFile.exists()) {
 
