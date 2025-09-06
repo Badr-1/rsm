@@ -3,14 +3,11 @@ import com.github.ajalt.clikt.core.subcommands
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
-import com.github.kinquirer.core.Choice
-import models.SectionType
 import utils.FileUtils
-import utils.Utils.promptSection
-import utils.Utils.promptTargetBranch
+import utils.pdfFile
+import utils.resumeFile
 import java.awt.Desktop
 import java.io.File
-import kotlin.collections.filter
 
 val rsm = ResumeCLI()
 
@@ -33,8 +30,7 @@ class ReorderCommand : CliktCommand(name = "reorder", help = "Reorder items in a
     ).flag(default = false)
 
     override fun run() {
-        val target = promptTargetBranch("Select the target branch to reorder this in:")
-        ResumeManager.reorderSections(target, section)
+        ResumeManager.reorderSections(section)
     }
 }
 
@@ -54,34 +50,21 @@ class RoleCommand : CliktCommand(name = "role", help = "Create a new role-specif
 
 class AddCommand : CliktCommand(name = "add", help = "Add content to resume") {
     override fun run() {
-        val section = promptSection(
-            "What section do you want to add content to?",
-            SectionType.entries.filter { !it.isFixed }.map { Choice(it.displayName, it) })
-        val target = promptTargetBranch("Select the target branch to add this to:")
-        ResumeManager.addToSection(section, target)
+        ResumeManager.addToSection()
     }
 }
 
 class RemoveCommand : CliktCommand(name = "remove", help = "Remove content from resume") {
 
     override fun run() {
-        val section = promptSection(
-            "What section do you want to remove content from?",
-            SectionType.entries.filter { !it.isFixed }.map { Choice(it.displayName, it) })
-        val target = promptTargetBranch("Select the target branch to remove this from:")
-        ResumeManager.removeFromSection(section, target)
+        ResumeManager.removeFromSection()
     }
 }
 
 class UpdateCommand : CliktCommand(name = "update", help = "Update resume content") {
 
     override fun run() {
-        val section = promptSection(
-            "What section do you want to update?",
-            SectionType.entries.map { Choice(it.displayName, it) })
-
-        val target = promptTargetBranch("Select the target branch to update this at:")
-        ResumeManager.updateAtSection(section, target)
+        ResumeManager.updateAtSection()
     }
 }
 

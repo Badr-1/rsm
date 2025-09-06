@@ -6,6 +6,7 @@ import com.github.kinquirer.components.promptList
 import com.github.kinquirer.components.promptListObject
 import com.github.kinquirer.core.Choice
 import models.SectionType
+import java.io.File
 
 object Utils {
     fun List<Any>.toCommitMessage(title: String): String {
@@ -44,13 +45,44 @@ object Utils {
             .escapeLatexSpecialChars()
     }
 
-    fun promptSection(message: String, choices: List<Choice<SectionType>>): SectionType {
-        val selected = KInquirer.promptListObject(message, choices)
-        return selected
+    fun promptTargetBranch(): String {
+        return KInquirer.promptList("Select target branch:", GitUtils.listBranches())
     }
 
-    fun promptTargetBranch(message: String): String {
-        return KInquirer.promptList(message, GitUtils.listBranches())
+    fun promptSection(message: String, orderable: Boolean, predicate: (SectionType) -> Boolean): SectionType {
+        return if (orderable)
+            KInquirer.promptListObject(
+                message,
+                SectionType.entries.filter(predicate).map { Choice(it.displayName, it) })
+        else
+            KInquirer.promptListObject(
+                message,
+                SectionType.entries.filter(predicate).map { Choice(it.displayName, it) }
+            )
+    }
+
+    fun promptSectionAndTargetBranch(message: String, predicate: (SectionType) -> Boolean): Pair<SectionType, String> {
+        val branch = promptTargetBranch()
+        val section = promptSection(message, false, predicate)
+        return Pair(section, branch)
+    }
+
+
+    fun compilePdf(): Pair<Process, Int> {
+        val process = ProcessBuilder("pdflatex", "resume.tex")
+            .directory(File("."))
+            .redirectErrorStream(true)
+            .redirectOutput(
+                ProcessBuilder.Redirect.to(
+                    File(
+                        if (System.getProperty("os.name").lowercase().contains("win")) "NUL" else "/dev/null"
+                    )
+                )
+            )
+            .start()
+
+        val exitCode = process.waitFor()
+        return Pair(process, exitCode)
     }
 
 }

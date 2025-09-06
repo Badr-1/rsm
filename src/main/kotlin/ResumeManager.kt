@@ -21,11 +21,12 @@ import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.errors.EmptyCommitException
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import utils.Utils.promptSection
+import utils.Utils.promptSectionAndTargetBranch
+import utils.Utils.promptTargetBranch
 import utils.Utils.toCommitMessage
 import utils.configFile
 import utils.ignoreFile
 import utils.resumeFile
-import java.io.File
 
 
 object ResumeManager {
@@ -110,7 +111,9 @@ object ResumeManager {
         }
     }
 
-    fun updateAtSection(section: SectionType, target: String) {
+    fun updateAtSection() {
+        val (section, target) = promptSectionAndTargetBranch("What section do you want to update?") { true }
+
         val git = openGitRepository()
         git.checkout().setName(target).call()
 
@@ -205,10 +208,13 @@ object ResumeManager {
         saveAndCommit(resumeData, git, metaData)
     }
 
-    fun addToSection(section: SectionType, target: String?) {
+    fun addToSection() {
+        val (section, target) = promptSectionAndTargetBranch(
+            "What section do you want to add content to?"
+        ) { !it.isFixed }
+
         val git = openGitRepository()
-        val targetBranch = target ?: getCurrentBranch(git)
-        git.checkout().setName(targetBranch).call()
+        git.checkout().setName(target).call()
 
         val resumeData = loadConfig()
         var metaData = ""
@@ -277,11 +283,13 @@ object ResumeManager {
         git.checkout().setName("main").call()
     }
 
-    fun removeFromSection(section: SectionType, target: String?) {
+    fun removeFromSection() {
+        val (section, target) = promptSectionAndTargetBranch(
+            "What section do you want to remove content from?"
+        ) { !it.isFixed }
         val git = openGitRepository()
-        val targetBranch = target ?: getCurrentBranch(git)
 
-        git.checkout().setName(targetBranch).call()
+        git.checkout().setName(target).call()
 
         val resumeData = loadConfig()
 
@@ -426,10 +434,6 @@ object ResumeManager {
         return Git(repo)
     }
 
-    private fun getCurrentBranch(git: Git): String {
-        return git.repository.branch
-    }
-
     private fun saveAndCommit(data: ResumeData, git: Git, message: String) {
         saveConfig(data)
         git.add().addFilepattern(".").call()
@@ -442,7 +446,9 @@ object ResumeManager {
         println("✅ $message")
     }
 
-    fun reorderSections(target: String, section: Boolean) {
+    fun reorderSections(section: Boolean) {
+        val target = promptTargetBranch()
+
         val git = openGitRepository()
         git.checkout().setName(target).call()
 
@@ -455,7 +461,8 @@ object ResumeManager {
         if (section) {
             val section = promptSection(
                 "What section do you want to reorder?",
-                SectionType.entries.filter { !it.isFixed }.map { Choice(it.displayName, it) })
+                true
+            ) { !it.isFixed }
 
             reorderSection(resumeData, section)
         }
