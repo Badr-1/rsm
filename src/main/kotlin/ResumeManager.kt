@@ -384,7 +384,7 @@ object ResumeManager {
         val resumeData = loadConfig()
         val orderedSections = KInquirer.promptOrderableListObject(
             message = "choose the order of sections",
-            choices = SectionType.entries.filter { !it.isFixed }.map { Choice(it.displayName, it) }.toMutableList(),
+            choices = resumeData.orderedSections.map { Choice(it.displayName, it) }.toMutableList(),
             hint = "use arrow keys to move up/down, spacebar to select to reorder"
         )
         resumeData.orderedSections = orderedSections.ifEmpty { SectionType.entries.filter { !it.isFixed } }
