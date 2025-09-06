@@ -36,7 +36,10 @@ object Utils {
     }
 
     fun readLineRequired(prompt: String, validation: (String) -> Boolean = { true }): String {
-        return KInquirer.promptInput(message = prompt, hint = "(required)", validation = { it.isNotEmpty() })
+        return KInquirer.promptInput(
+            message = prompt,
+            hint = "(required)",
+            validation = { it.isNotEmpty() && validation(it) })
             .escapeLatexSpecialChars()
     }
 
