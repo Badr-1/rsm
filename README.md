@@ -63,6 +63,40 @@ rsm add
 rsm remove
 ```
 
+### Update Content
+
+```bash
+rsm update
+```
+
+### Reorder Content
+
+```bash
+rsm reorder
+```
+
+### Generate LaTeX file
+
+```bash
+rsm generate
+```
+
+### Compile to Pdf
+```bash
+rsm compile
+# to clear auxiliary files before compiling use 
+rsm compile -c # or --clean
+# to open the generated PDF after compiling
+rsm compile -o # or --open
+# to do both clean and open
+rsm compile -co # or --clean --open
+# to generate latex from configs before compiling
+rsm compile -g # or --generate
+# complete command to generate, compile and clear auxiliary files
+rsm compile -gco # or --clean --generate --open
+```
+
+
 ## Example Workflow
 
 1.**Initialize your résumé**:
@@ -78,27 +112,26 @@ rsm role "senior-backend-developer"
 3.**Customize for the role**:
 ```bash
 # Switch to the role branch and add relevant experience
-rsm add"
+rsm add
 ```
 
 4.**Generate PDF**:
 ```bash
 rsm compile
-# to clear auxiliary files before compiling use 
-rsm compile -c # or --clean
-# to open the generated PDF after compiling
-rsm compile -o # or --open
-# to do both clean and open
-rsm compile -co # or --clean --open
-# to generate latex from configs before compiling
-rsm compile -g # or --generate
-# complete command to generate, compile and clear auxiliary files
-rsm compile -cgo # or --clean --generate --open
 ```
+
+## Best Practice
+ 
+My Opinion the best usage of this tool would be:
+1. create a complete resume in your main branch don't leave out anything
+2. when applying use `rsm role` to create a tailored resume for the position
+3. change the resume based on the role, the changes should mostly be removal.
+
+this flow helps with syncing the roles branches with main one when via rebasing without any conflicts
 
 ## Configuration
 
-The tool stores configuration in `.resume-config.json`:
+The tool stores configuration in `resume-config.json`:
 
 ```json
 {
@@ -140,16 +173,6 @@ Based on Jake Gutierrez's resume template:
 - Customizable sections
 - PDF generation ready
 
-## Commands Reference
-
-| Command            | Description                   | Example                             |
-|--------------------|-------------------------------|-------------------------------------|
-| `init`             | Initialize new resume         | `rsm init`                          |
-| `role <role-name>` | Create role branch            | `rsm role senior-backend-developer` |
-| `add`              | Add content to section        | `rsm add`                           |
-| `remove`           | Remove content from section   | `rsm remove`                        |
-| `generate`         | Generate LaTeX from config    | `rsm generate`                      |    
-| `compile`          | Compile LaTeX to PDF          | `rsm compile`                       |
 
 ### Sections
 
@@ -163,10 +186,6 @@ Based on Jake Gutierrez's resume template:
 - `experience`: Work experience
 - `projects`: Personal/professional projects
 - `skills`: Technical skills and technologies
-  - `languages`
-  - `frameworks`
-  - `frameworks`
-  - `libraries`
 
   
 
