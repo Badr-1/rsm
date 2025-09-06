@@ -1,10 +1,13 @@
 package utils
 
 import com.github.kinquirer.KInquirer
+import com.github.kinquirer.components.promptConfirm
 import com.github.kinquirer.components.promptInput
 import com.github.kinquirer.components.promptList
 import com.github.kinquirer.components.promptListObject
+import com.github.kinquirer.components.promptOrderableListObject
 import com.github.kinquirer.core.Choice
+import models.OrderableBullets
 import models.SectionType
 import java.io.File
 
@@ -86,6 +89,27 @@ object Utils {
 
         val exitCode = process.waitFor()
         return Pair(process, exitCode)
+    }
+
+    inline fun <reified T> MutableList<T>.reorder(message: String) {
+        val organized = KInquirer.promptOrderableListObject(
+            message,
+            this.map { Choice(it.toString(), it) }.toMutableList(),
+            hint = "move using arrow keys"
+        ) as MutableList<T>
+        this.clear()
+        this.addAll(organized)
+
+        if (OrderableBullets::class.java.isAssignableFrom(T::class.java))
+            forEach {
+                val reorderBulletsConfirm = KInquirer.promptConfirm(
+                    "Do you want to reorder bullets for $it ?",
+                    default = false
+                )
+                if (reorderBulletsConfirm) {
+                    (it as OrderableBullets).reorderBullets()
+                }
+            }
     }
 
 }

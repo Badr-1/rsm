@@ -16,14 +16,8 @@ class InitCommand : CliktCommand(name = "init", help = "Initialize a new resume 
 }
 
 class ReorderCommand : CliktCommand(name = "reorder", help = "Reorder items in a section") {
-    private val section by option(
-        "--section",
-        "-s",
-        help = "choose section to reorder"
-    ).flag(default = false)
-
     override fun run() {
-        ResumeManager.reorderSections(section)
+        ResumeManager.reorderSections()
     }
 }
 

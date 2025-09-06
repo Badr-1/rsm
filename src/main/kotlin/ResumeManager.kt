@@ -13,6 +13,7 @@ import utils.Utils.compilePdf
 import utils.Utils.promptSection
 import utils.Utils.promptSectionAndTargetBranch
 import utils.Utils.promptTargetBranch
+import utils.Utils.reorder
 import utils.Utils.toCommitMessage
 import java.awt.Desktop
 import java.io.File
@@ -459,7 +460,7 @@ object ResumeManager {
         }
     }
 
-    fun reorderSections(section: Boolean) {
+    fun reorderSections() {
         val target = promptTargetBranch()
 
         val git = openGitRepository()
@@ -471,15 +472,19 @@ object ResumeManager {
             choices = SectionType.entries.filter { !it.isFixed }.map { Choice(it.displayName, it) }.toMutableList(),
             hint = "use arrow keys to move up/down, spacebar to select to reorder"
         )
-        if (section) {
+        resumeData.orderedSections = orderedSections.ifEmpty { SectionType.entries.filter { !it.isFixed } }
+
+        val confirmSectionReorder = KInquirer.promptConfirm(
+            "Do you want to reorder any section?"
+        )
+        if (confirmSectionReorder) {
             val section = promptSection(
                 "What section do you want to reorder?",
-                true
+                false
             ) { !it.isFixed }
 
             reorderSection(resumeData, section)
         }
-        resumeData.orderedSections = orderedSections.ifEmpty { SectionType.entries.filter { !it.isFixed } }
         saveAndCommit(resumeData, git, "Reordered sections")
         git.checkout().setName("main").call()
     }
@@ -488,43 +493,23 @@ object ResumeManager {
         when (section) {
             SectionType.PERSONAL_INFO -> {}
             SectionType.EDUCATION -> {
-                resumeData.reorderEducation()
+                resumeData.education.reorder("Reorder Education Entries:")
             }
 
             SectionType.EXPERIENCE -> {
-                resumeData.reorderExperience()
-                resumeData.experience.forEach { experience ->
-                    val reorderBulletsConfirm = KInquirer.promptConfirm(
-                        "Do you want to reorder bullets for experience: $experience ?",
-                        default = false
-                    )
-                    if (reorderBulletsConfirm) {
-                        experience.reorderBullets()
-                    }
-
-                }
+                resumeData.experience.reorder("Reorder Experience Entries:")
             }
 
             SectionType.PROJECTS -> {
-                resumeData.reorderProjects()
-                resumeData.projects.forEach { project ->
-                    val reorderBulletsConfirm = KInquirer.promptConfirm(
-                        "Do you want to reorder bullets for project: $project ?",
-                        default = false
-                    )
-                    if (reorderBulletsConfirm) {
-                        project.reorderBullets()
-                    }
-
-                }
+                resumeData.projects.reorder("Reorder Project Entries:")
             }
 
             SectionType.TECHNICAL_SKILLS -> {
-                resumeData.reorderTechnicalSkills()
+                resumeData.technicalSkills.reorder("Reorder Technical Skill Categories:")
             }
 
             SectionType.CERTIFICATIONS -> {
-                resumeData.reorderCertifications()
+                resumeData.certifications.reorder("Reorder Certification Entries:")
             }
         }
     }
