@@ -1,3 +1,4 @@
+import com.github.ajalt.clikt.completion.CompletionCommand
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.subcommands
 import com.github.ajalt.clikt.parameters.arguments.argument
@@ -8,26 +9,26 @@ object Rsm : CliktCommand(name = "rsm") {
     override fun run() = Unit
 }
 
-class InitCommand : CliktCommand(name = "init", help = "Initialize a new resume repository") {
+object InitCommand : CliktCommand(name = "init", help = "Initialize a new resume repository") {
     override fun run() {
         ResumeManager.initializeResume()
         Rsm.echoFormattedHelp()
     }
 }
 
-class ReorderCommand : CliktCommand(name = "reorder", help = "Reorder items in a section") {
+object ReorderCommand : CliktCommand(name = "reorder", help = "Reorder items in a section") {
     override fun run() {
         ResumeManager.reorderSections()
     }
 }
 
-class GenerateCommand : CliktCommand(name = "generate", help = "Generate LaTeX resume from configuration") {
+object GenerateCommand : CliktCommand(name = "generate", help = "Generate LaTeX resume from configuration") {
     override fun run() {
         ResumeManager.generateLatexFile()
     }
 }
 
-class RoleCommand : CliktCommand(name = "role", help = "Create a new role-specific branch") {
+object RoleCommand : CliktCommand(name = "role", help = "Create a new role-specific branch") {
     private val roleName by argument(help = "Name of the role/position")
 
     override fun run() {
@@ -35,29 +36,27 @@ class RoleCommand : CliktCommand(name = "role", help = "Create a new role-specif
     }
 }
 
-class AddCommand : CliktCommand(name = "add", help = "Add content to resume") {
+object AddCommand : CliktCommand(name = "add", help = "Add content to resume") {
     override fun run() {
         ResumeManager.addToSection()
     }
 }
 
-class RemoveCommand : CliktCommand(name = "remove", help = "Remove content from resume") {
+object RemoveCommand : CliktCommand(name = "remove", help = "Remove content from resume") {
 
     override fun run() {
         ResumeManager.removeFromSection()
     }
 }
 
-class UpdateCommand : CliktCommand(name = "update", help = "Update resume content") {
+object UpdateCommand : CliktCommand(name = "update", help = "Update resume content") {
 
     override fun run() {
         ResumeManager.updateAtSection()
     }
 }
 
-
-
-class CompileCommand : CliktCommand(name = "compile", help = "Compile LaTeX resume to PDF") {
+object CompileCommand : CliktCommand(name = "compile", help = "Compile LaTeX resume to PDF") {
     private val generate by option(
         "--generate",
         "-g",
@@ -78,13 +77,14 @@ class CompileCommand : CliktCommand(name = "compile", help = "Compile LaTeX resu
 
 fun main(args: Array<String>) = Rsm
     .subcommands(
-        InitCommand(),
-        GenerateCommand(),
-        RoleCommand(),
-        AddCommand(),
-        RemoveCommand(),
-        UpdateCommand(),
-        ReorderCommand(),
-        CompileCommand(),
+        InitCommand,
+        AddCommand,
+        RemoveCommand,
+        UpdateCommand,
+        ReorderCommand,
+        RoleCommand,
+        GenerateCommand,
+        CompileCommand,
+        CompletionCommand()
     )
     .main(args)
