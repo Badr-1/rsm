@@ -101,6 +101,81 @@ object ResumeManager {
         }
     }
 
+    fun addToSection() {
+        val (section, target) = promptSectionAndTargetBranch(
+            "What section do you want to add content to?"
+        ) { !it.isFixed }
+
+        val git = openGitRepository()
+        git.checkout().setName(target).call()
+
+        val resumeData = loadConfig()
+        var metaData = ""
+        when (section) {
+            SectionType.PERSONAL_INFO -> {/*can't add to this section*/
+            }
+
+            SectionType.EDUCATION -> {
+                val position = KInquirer.promptList(
+                    "Select the position to add new education entry to:",
+                    resumeData.education.mapIndexed { index, education -> "$index: $education" } + "${resumeData.education.size}: add to the end"
+                ).split(":").first().toInt()
+
+                resumeData.education.addAll(position, Education.collect("add new education entry:").apply {
+                    metaData += this.toCommitMessage("Added new education\n\n")
+                })
+            }
+
+            SectionType.EXPERIENCE -> {
+                val position = KInquirer.promptList(
+                    "Select the position to add new experience entry to:",
+                    resumeData.experience.mapIndexed { index, experience -> "$index: $experience" } + "${resumeData.experience.size}: add to the end"
+                ).split(":").first().toInt()
+
+                resumeData.experience.addAll(position, Experience.collect("add new experience entry:").apply {
+                    metaData += this.toCommitMessage("Added new experiences\n\n")
+                })
+            }
+
+            SectionType.PROJECTS -> {
+                metaData = "\n\n"
+                val position = KInquirer.promptList(
+                    "Select the position to add new project entry to:",
+                    resumeData.projects.mapIndexed { index, project -> "$index: $project" } + "${resumeData.projects.size}: add to the end"
+                ).split(":").first().toInt()
+                resumeData.projects.addAll(position, Project.collect("add new project entry:").apply {
+                    metaData += this.toCommitMessage("Added new projects\n\n")
+                })
+            }
+
+            SectionType.TECHNICAL_SKILLS -> {
+                metaData = "Added new technical skills\n\n"
+                resumeData.technicalSkills += TechnicalSkills.collect(
+                    "add new technical skills:",
+                    !resumeData.technicalSkills.isFlattened()
+                ).apply {
+                    entries.forEach { (category, skills) ->
+                        metaData += skills.toCommitMessage(category)
+                    }
+                }
+            }
+
+            SectionType.CERTIFICATIONS -> {
+                val position = KInquirer.promptList(
+                    "Select the position to add new certification entry to:",
+                    resumeData.certifications.mapIndexed { index, certification -> "$index: $certification" } + "${resumeData.certifications.size}: add to the end"
+                ).split(":").first().toInt()
+                resumeData.certifications.addAll(position, Certification.collect("add new certification entry:").apply {
+                    metaData += this.toCommitMessage("Added new certifications\n\n")
+                })
+                resumeData.certifications.reorganize()
+            }
+        }
+
+        saveAndCommit(resumeData, git, metaData)
+        git.checkout().setName("main").call()
+    }
+
     fun updateAtSection() {
         val (section, target) = promptSectionAndTargetBranch("What section do you want to update?") { true }
 
@@ -196,81 +271,6 @@ object ResumeManager {
             }
         }
         saveAndCommit(resumeData, git, metaData)
-    }
-
-    fun addToSection() {
-        val (section, target) = promptSectionAndTargetBranch(
-            "What section do you want to add content to?"
-        ) { !it.isFixed }
-
-        val git = openGitRepository()
-        git.checkout().setName(target).call()
-
-        val resumeData = loadConfig()
-        var metaData = ""
-        when (section) {
-            SectionType.PERSONAL_INFO -> {/*can't add to this section*/
-            }
-
-            SectionType.EDUCATION -> {
-                val position = KInquirer.promptList(
-                    "Select the position to add new education entry to:",
-                    resumeData.education.mapIndexed { index, education -> "$index: $education" } + "${resumeData.education.size}: add to the end"
-                ).split(":").first().toInt()
-
-                resumeData.education.addAll(position, Education.collect("add new education entry:").apply {
-                    metaData += this.toCommitMessage("Added new education\n\n")
-                })
-            }
-
-            SectionType.EXPERIENCE -> {
-                val position = KInquirer.promptList(
-                    "Select the position to add new experience entry to:",
-                    resumeData.experience.mapIndexed { index, experience -> "$index: $experience" } + "${resumeData.experience.size}: add to the end"
-                ).split(":").first().toInt()
-
-                resumeData.experience.addAll(position, Experience.collect("add new experience entry:").apply {
-                    metaData += this.toCommitMessage("Added new experiences\n\n")
-                })
-            }
-
-            SectionType.PROJECTS -> {
-                metaData = "\n\n"
-                val position = KInquirer.promptList(
-                    "Select the position to add new project entry to:",
-                    resumeData.projects.mapIndexed { index, project -> "$index: $project" } + "${resumeData.projects.size}: add to the end"
-                ).split(":").first().toInt()
-                resumeData.projects.addAll(position, Project.collect("add new project entry:").apply {
-                    metaData += this.toCommitMessage("Added new projects\n\n")
-                })
-            }
-
-            SectionType.TECHNICAL_SKILLS -> {
-                metaData = "Added new technical skills\n\n"
-                resumeData.technicalSkills += TechnicalSkills.collect(
-                    "add new technical skills:",
-                    !resumeData.technicalSkills.isFlattened()
-                ).apply {
-                    entries.forEach { (category, skills) ->
-                        metaData += skills.toCommitMessage(category)
-                    }
-                }
-            }
-
-            SectionType.CERTIFICATIONS -> {
-                val position = KInquirer.promptList(
-                    "Select the position to add new certification entry to:",
-                    resumeData.certifications.mapIndexed { index, certification -> "$index: $certification" } + "${resumeData.certifications.size}: add to the end"
-                ).split(":").first().toInt()
-                resumeData.certifications.addAll(position, Certification.collect("add new certification entry:").apply {
-                    metaData += this.toCommitMessage("Added new certifications\n\n")
-                })
-                resumeData.certifications.reorganize()
-            }
-        }
-
-        saveAndCommit(resumeData, git, metaData)
-        git.checkout().setName("main").call()
     }
 
     fun removeFromSection() {
@@ -382,84 +382,6 @@ object ResumeManager {
         saveAndCommit(resumeData, git, metadata)
     }
 
-
-    fun generateLatexFile() {
-        if (configFile.exists()) {
-            val latex = LaTeXGenerator.generate(loadConfig())
-            resumeFile.writeText(latex)
-            println("📄 Generated resume.tex")
-        } else {
-            println("❌ No configuration found. Please run 'resume init' first.")
-        }
-    }
-
-    private fun saveConfig(data: ResumeData) {
-        val json = json.encodeToString(data)
-        configFile.writeText(json)
-    }
-
-    private fun loadConfig(): ResumeData {
-        return if (configFile.exists()) {
-            Json.decodeFromString<ResumeData>(configFile.readText()).let { data ->
-                data.copy(
-                    education = data.education.filter { it.toString().isNotBlank() }.toMutableList(),
-                    experience = data.experience.filter { it.toString().isNotBlank() }.toMutableList(),
-                    projects = data.projects.filter { it.toString().isNotBlank() }.toMutableList(),
-                    technicalSkills = data.technicalSkills
-                )
-            }
-
-        } else {
-            ResumeData()
-        }
-    }
-
-    private fun openGitRepository(): Git {
-        val repo =
-            FileRepositoryBuilder()
-                .setGitDir(File(".git"))
-                .setWorkTree(File(System.getProperty("user.dir")))
-                .setInitialBranch("main")
-                .build()
-        return Git(repo)
-    }
-
-    private fun saveAndCommit(data: ResumeData, git: Git, message: String) {
-        saveConfig(data)
-        git.add().addFilepattern(".").call()
-        try {
-            git.commit().setAllowEmpty(false).setMessage(message).call()
-        } catch (_: EmptyCommitException) {
-            println("❌ No changes to commit.")
-            return
-        }
-        println("✅ $message")
-    }
-
-    private fun cleanAuxiliaryFiles() {
-        val auxiliaryExtensions = listOf("aux", "log", "out", "fls", "fdb_latexmk", "synctex.gz")
-        auxiliaryExtensions.forEach { ext ->
-            val file = File("resume.$ext")
-            if (file.exists()) {
-                file.delete()
-                println("🧹 Cleaned resume.$ext")
-            }
-        }
-    }
-
-    private fun openPdf() {
-        if (pdfFile.exists()) {
-            try {
-                if (Desktop.isDesktopSupported()) {
-                    Desktop.getDesktop().open(pdfFile)
-                }
-                println("📖 Opened resume.pdf")
-            } catch (e: Exception) {
-                println("⚠️  Could not open PDF automatically: ${e.message}")
-            }
-        }
-    }
-
     fun reorderSections() {
         val target = promptTargetBranch()
 
@@ -514,6 +436,59 @@ object ResumeManager {
         }
     }
 
+    fun generateLatexFile() {
+        if (configFile.exists()) {
+            val latex = LaTeXGenerator.generate(loadConfig())
+            resumeFile.writeText(latex)
+            println("📄 Generated resume.tex")
+        } else {
+            println("❌ No configuration found. Please run 'resume init' first.")
+        }
+    }
+
+    private fun saveConfig(data: ResumeData) {
+        val json = json.encodeToString(data)
+        configFile.writeText(json)
+    }
+
+    private fun loadConfig(): ResumeData {
+        return if (configFile.exists()) {
+            Json.decodeFromString<ResumeData>(configFile.readText()).let { data ->
+                data.copy(
+                    education = data.education.filter { it.toString().isNotBlank() }.toMutableList(),
+                    experience = data.experience.filter { it.toString().isNotBlank() }.toMutableList(),
+                    projects = data.projects.filter { it.toString().isNotBlank() }.toMutableList(),
+                    technicalSkills = data.technicalSkills
+                )
+            }
+
+        } else {
+            ResumeData()
+        }
+    }
+
+    private fun openGitRepository(): Git {
+        val repo =
+            FileRepositoryBuilder()
+                .setGitDir(File(".git"))
+                .setWorkTree(File(System.getProperty("user.dir")))
+                .setInitialBranch("main")
+                .build()
+        return Git(repo)
+    }
+
+    private fun saveAndCommit(data: ResumeData, git: Git, message: String) {
+        saveConfig(data)
+        git.add().addFilepattern(".").call()
+        try {
+            git.commit().setAllowEmpty(false).setMessage(message).call()
+        } catch (_: EmptyCommitException) {
+            println("❌ No changes to commit.")
+            return
+        }
+        println("✅ $message")
+    }
+
     fun compileLateXtoPdf(clean: Boolean, open: Boolean) {
         if (!resumeFile.exists()) {
             println("❌ resume.tex not found. Run 'resume init' first.")
@@ -554,6 +529,30 @@ object ResumeManager {
         } catch (e: Exception) {
             println("❌ Failed to compile: ${e.message}")
             println("💡 Make sure pdflatex is installed and in your PATH")
+        }
+    }
+
+    private fun cleanAuxiliaryFiles() {
+        val auxiliaryExtensions = listOf("aux", "log", "out", "fls", "fdb_latexmk", "synctex.gz")
+        auxiliaryExtensions.forEach { ext ->
+            val file = File("resume.$ext")
+            if (file.exists()) {
+                file.delete()
+                println("🧹 Cleaned resume.$ext")
+            }
+        }
+    }
+
+    private fun openPdf() {
+        if (pdfFile.exists()) {
+            try {
+                if (Desktop.isDesktopSupported()) {
+                    Desktop.getDesktop().open(pdfFile)
+                }
+                println("📖 Opened resume.pdf")
+            } catch (e: Exception) {
+                println("⚠️  Could not open PDF automatically: ${e.message}")
+            }
         }
     }
 
