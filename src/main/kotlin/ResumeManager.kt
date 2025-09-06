@@ -4,6 +4,7 @@ import com.github.kinquirer.core.Choice
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import models.*
+import models.Certification.Companion.reorder
 import models.Certification.Companion.reorganize
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.errors.EmptyCommitException

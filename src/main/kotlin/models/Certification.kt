@@ -2,6 +2,8 @@ package models
 
 import com.github.kinquirer.KInquirer
 import com.github.kinquirer.components.promptConfirm
+import com.github.kinquirer.components.promptOrderableListObject
+import com.github.kinquirer.core.Choice
 import kotlinx.serialization.Serializable
 import utils.Utils
 
@@ -40,6 +42,16 @@ data class Certification(
             this.clear()
             this.addAll(organized)
             return this
+        }
+
+        fun MutableList<Certification>.reorder() {
+            val organized = KInquirer.promptOrderableListObject(
+                "Reorder Certification Entries:",
+                this.groupBy { it.issuingOrganization }.map { Choice(it.key, it) }.toMutableList(),
+                hint = "move using arrow keys"
+            ).flatMap { it.value }.toMutableList()
+            this.clear()
+            this.addAll(organized)
         }
     }
 
