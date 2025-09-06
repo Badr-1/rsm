@@ -91,16 +91,16 @@ object Utils {
         return Pair(process, exitCode)
     }
 
-    inline fun <reified T> MutableList<T>.reorder(message: String) {
+    inline fun <reified T> MutableList<T>.reorder(reorderBullets: Boolean = true) {
         val organized = KInquirer.promptOrderableListObject(
-            message,
+            "Reorder ${T::class.java.simpleName} Entries:",
             this.map { Choice(it.toString(), it) }.toMutableList(),
             hint = "move using arrow keys"
         ) as MutableList<T>
         this.clear()
         this.addAll(organized)
 
-        if (OrderableBullets::class.java.isAssignableFrom(T::class.java))
+        if (reorderBullets && OrderableBullets::class.java.isAssignableFrom(T::class.java))
             forEach {
                 val reorderBulletsConfirm = KInquirer.promptConfirm(
                     "Do you want to reorder bullets for $it ?",

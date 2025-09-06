@@ -89,14 +89,14 @@ data class TechnicalSkills(
         return metadata
     }
 
-    fun reorder(message: String) {
+    fun reorder() {
         if (isFlattened()) {
             println("Technical skills are flattened. Reordering not applicable.")
             return
         } else {
             val categories = entries.keys.toList()
             val reorderedCategories = KInquirer.promptOrderableListObject(
-                message,
+                "Reorder Technical Skill Categories:",
                 categories.map { Choice(it, it) }.toMutableList(),
                 hint = "move using arrow keys"
             )
@@ -154,6 +154,6 @@ data class TechnicalSkills(
     }
 
     fun isFlattened(): Boolean {
-        return entries.size == 1 && entries.containsKey("Technical Skills")
+        return entries.isEmpty() ||(entries.size == 1 && entries.containsKey("Technical Skills"))
     }
 }

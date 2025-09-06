@@ -116,36 +116,31 @@ object ResumeManager {
             }
 
             SectionType.EDUCATION -> {
-                val position = KInquirer.promptList(
-                    "Select the position to add new education entry to:",
-                    resumeData.education.mapIndexed { index, education -> "$index: $education" } + "${resumeData.education.size}: add to the end"
-                ).split(":").first().toInt()
-
-                resumeData.education.addAll(position, Education.collect("add new education entry:").apply {
+                resumeData.education.addAll(0, Education.collect("add new education entry:").apply {
                     metaData += this.toCommitMessage("Added new education\n\n")
                 })
+                println("New Entries are Added at the top of the Section")
+                if (resumeData.education.size > 1 && KInquirer.promptConfirm("Do You want to change order?", false))
+                    resumeData.education.reorder(false)
             }
 
             SectionType.EXPERIENCE -> {
-                val position = KInquirer.promptList(
-                    "Select the position to add new experience entry to:",
-                    resumeData.experience.mapIndexed { index, experience -> "$index: $experience" } + "${resumeData.experience.size}: add to the end"
-                ).split(":").first().toInt()
-
-                resumeData.experience.addAll(position, Experience.collect("add new experience entry:").apply {
+                resumeData.experience.addAll(0, Experience.collect("add new experience entry:").apply {
                     metaData += this.toCommitMessage("Added new experiences\n\n")
                 })
+                println("New Entries are Added at the top of the Section")
+                if (resumeData.experience.size > 1 && KInquirer.promptConfirm("Do You want to change order?", false))
+                    resumeData.experience.reorder(false)
             }
 
             SectionType.PROJECTS -> {
                 metaData = "\n\n"
-                val position = KInquirer.promptList(
-                    "Select the position to add new project entry to:",
-                    resumeData.projects.mapIndexed { index, project -> "$index: $project" } + "${resumeData.projects.size}: add to the end"
-                ).split(":").first().toInt()
-                resumeData.projects.addAll(position, Project.collect("add new project entry:").apply {
+                resumeData.projects.addAll(0, Project.collect("add new project entry:").apply {
                     metaData += this.toCommitMessage("Added new projects\n\n")
                 })
+                println("New Entries are Added at the top of the Section")
+                if (resumeData.projects.size > 1 && KInquirer.promptConfirm("Do You want to change order?", false))
+                    resumeData.projects.reorder(false)
             }
 
             SectionType.TECHNICAL_SKILLS -> {
@@ -161,14 +156,12 @@ object ResumeManager {
             }
 
             SectionType.CERTIFICATIONS -> {
-                val position = KInquirer.promptList(
-                    "Select the position to add new certification entry to:",
-                    resumeData.certifications.mapIndexed { index, certification -> "$index: $certification" } + "${resumeData.certifications.size}: add to the end"
-                ).split(":").first().toInt()
-                resumeData.certifications.addAll(position, Certification.collect("add new certification entry:").apply {
+                resumeData.certifications.addAll(0,Certification.collect("add new certification entry:").apply {
                     metaData += this.toCommitMessage("Added new certifications\n\n")
                 })
-                resumeData.certifications.reorganize()
+                println("New Entries are Added at the top of the Section")
+                if (resumeData.certifications.size > 1 && KInquirer.promptConfirm("Do You want to change order?", false))
+                    resumeData.certifications.reorder(false)
             }
         }
 
@@ -415,23 +408,23 @@ object ResumeManager {
         when (section) {
             SectionType.PERSONAL_INFO -> {}
             SectionType.EDUCATION -> {
-                resumeData.education.reorder("Reorder Education Entries:")
+                resumeData.education.reorder()
             }
 
             SectionType.EXPERIENCE -> {
-                resumeData.experience.reorder("Reorder Experience Entries:")
+                resumeData.experience.reorder()
             }
 
             SectionType.PROJECTS -> {
-                resumeData.projects.reorder("Reorder Project Entries:")
+                resumeData.projects.reorder()
             }
 
             SectionType.TECHNICAL_SKILLS -> {
-                resumeData.technicalSkills.reorder("Reorder Technical Skill Categories:")
+                resumeData.technicalSkills.reorder()
             }
 
             SectionType.CERTIFICATIONS -> {
-                resumeData.certifications.reorder("Reorder Certification Entries:")
+                resumeData.certifications.reorder()
             }
         }
     }
