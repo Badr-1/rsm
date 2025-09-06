@@ -263,7 +263,7 @@ object LaTeXGenerator {
                 if (certs.size == 1) {
                     appendLine("\\resumeProjectHeading{\\textbf{$org} ${certs[0].name}}{${certs[0].issueDate}}")
                 } else {
-                    appendLine("\\resumeProjectHeading{\\textbf{$org}}{${certs.first().issueDate} -- ${certs.last().issueDate}}")
+                    appendLine("\\resumeProjectHeading{\\textbf{$org}}{${certs.last().issueDate} -- ${certs.first().issueDate}}")
                     appendLine("\\resumeItemListStart")
                     certs.forEach { cert ->
                         appendLine("\\resumeItem{${cert.name} (${cert.issueDate})}")
