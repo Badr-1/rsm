@@ -1,32 +1,21 @@
 import com.github.kinquirer.KInquirer
-import com.github.kinquirer.components.promptCheckbox
-import com.github.kinquirer.components.promptCheckboxObject
-import com.github.kinquirer.components.promptConfirm
-import com.github.kinquirer.components.promptList
-import com.github.kinquirer.components.promptOrderableListObject
+import com.github.kinquirer.components.*
 import com.github.kinquirer.core.Choice
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.encodeToString
-import models.Certification
+import kotlinx.serialization.json.Json
+import models.*
 import models.Certification.Companion.reorganize
-import models.Education
-import models.Experience
-import models.PersonalInfo
-import models.Project
-import models.ResumeData
-import models.SectionType
-import models.TechnicalSkills
-import java.io.File
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.errors.EmptyCommitException
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
+import utils.*
+import utils.Utils.compilePdf
 import utils.Utils.promptSection
 import utils.Utils.promptSectionAndTargetBranch
 import utils.Utils.promptTargetBranch
 import utils.Utils.toCommitMessage
-import utils.configFile
-import utils.ignoreFile
-import utils.resumeFile
+import java.awt.Desktop
+import java.io.File
 
 
 object ResumeManager {
@@ -446,6 +435,30 @@ object ResumeManager {
         println("✅ $message")
     }
 
+    private fun cleanAuxiliaryFiles() {
+        val auxiliaryExtensions = listOf("aux", "log", "out", "fls", "fdb_latexmk", "synctex.gz")
+        auxiliaryExtensions.forEach { ext ->
+            val file = File("resume.$ext")
+            if (file.exists()) {
+                file.delete()
+                println("🧹 Cleaned resume.$ext")
+            }
+        }
+    }
+
+    private fun openPdf() {
+        if (pdfFile.exists()) {
+            try {
+                if (Desktop.isDesktopSupported()) {
+                    Desktop.getDesktop().open(pdfFile)
+                }
+                println("📖 Opened resume.pdf")
+            } catch (e: Exception) {
+                println("⚠️  Could not open PDF automatically: ${e.message}")
+            }
+        }
+    }
+
     fun reorderSections(section: Boolean) {
         val target = promptTargetBranch()
 
@@ -513,6 +526,49 @@ object ResumeManager {
             SectionType.CERTIFICATIONS -> {
                 resumeData.reorderCertifications()
             }
+        }
+    }
+
+    fun compileLateXtoPdf(clean: Boolean, open: Boolean) {
+        if (!resumeFile.exists()) {
+            println("❌ resume.tex not found. Run 'resume init' first.")
+            return
+        }
+
+
+        val errors = FileUtils.validateLatexFile(resumeFile)
+        if (errors.isNotEmpty()) {
+            println("❌ LaTeX validation errors:")
+            errors.forEach { println("  • $it") }
+            return
+        }
+
+        println("🔨 Compiling LaTeX to PDF...")
+
+        try {
+            val (process, exitCode) = compilePdf()
+
+            if (exitCode == 0) {
+                println("✅ Successfully compiled to resume.pdf")
+
+                if (clean) {
+                    cleanAuxiliaryFiles()
+                }
+
+                if (open) {
+                    openPdf()
+                }
+            } else {
+                println("❌ Compilation failed with exit code: $exitCode")
+                val output = process.inputStream.bufferedReader().readText()
+                if (output.isNotEmpty()) {
+                    println("Error output:")
+                    println(output)
+                }
+            }
+        } catch (e: Exception) {
+            println("❌ Failed to compile: ${e.message}")
+            println("💡 Make sure pdflatex is installed and in your PATH")
         }
     }
 
