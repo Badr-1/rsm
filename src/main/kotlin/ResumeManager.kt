@@ -40,15 +40,6 @@ object ResumeManager {
         val git = Git.init().setDirectory(File(".")).setInitialBranch("main").call()
 
         if (!configFile.exists()) {
-            ignoreFile.writeText(
-                """
-            # Ignore generated files
-            *
-            !.gitignore
-            !${configFile.name}
-                """.trimIndent()
-            )
-
             val resumeData = ResumeData()
             resumeData.personalInfo = PersonalInfo.collect()
 
@@ -93,6 +84,29 @@ object ResumeManager {
         } else {
             println("📄 Resume configuration already exists.")
         }
+        ignoreAux()
+    }
+
+    fun ignoreAux() {
+        if(ignoreFile.exists())
+        {
+            return
+        }
+
+        ignoreFile.writeText(
+                """
+            # Ignore generated files
+            *
+            !.gitignore
+            !${configFile.name}
+                """.trimIndent()
+            )
+        val git = openGitRepository()
+
+        git.add().addFilepattern(".").call()
+        git.commit().setMessage("Add ignore Files").call()
+
+        
     }
 
     fun createRoleBranch(roleName: String) {
