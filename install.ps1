@@ -293,25 +293,51 @@ if ($missingTex.Count -gt 0) {
 }
 
 # ---------------------------------------------------------------- download
-function Test-Jar([string]$Path) {
-    if (-not (Test-Path $Path) -or (Get-Item $Path).Length -eq 0) { return $false }
+# Downloads are verified against the SHA-256 digest GitHub publishes for each
+# release asset. Without a digest (API unreachable, old assets, or -Jar), only
+# the ZIP signature is checked, which catches HTML error pages and empty files.
+
+# Non-empty and starts with the ZIP signature "PK\x03\x04"?
+function Test-JarSignature([string]$Path) {
+    if (-not (Test-Path -PathType Leaf $Path)) { return $false }
+    $fs = [IO.File]::OpenRead($Path)
     try {
-        Add-Type -AssemblyName System.IO.Compression.FileSystem
-        $zip = [IO.Compression.ZipFile]::OpenRead($Path)
-        try {
-            return [bool]($zip.Entries | Where-Object { $_.FullName -eq 'META-INF/MANIFEST.MF' })
-        } finally {
-            $zip.Dispose()
-        }
-    } catch {
-        return $false
+        $buf = New-Object byte[] 4
+        if ($fs.Read($buf, 0, 4) -ne 4) { return $false }
+        return ($buf[0] -eq 0x50 -and $buf[1] -eq 0x4B -and $buf[2] -eq 0x03 -and $buf[3] -eq 0x04)
+    } finally {
+        $fs.Dispose()
     }
+}
+
+function Get-JarDigest {
+    try {
+        $rel = Invoke-RestMethod -UseBasicParsing -ErrorAction Stop "https://api.github.com/repos/$Repo/releases/tags/v$Version"
+    } catch {
+        return ''
+    }
+    $asset = $rel.assets | Where-Object { $_.name -eq $JarName } | Select-Object -First 1
+    if ($asset -and "$($asset.digest)" -match '^sha256:([0-9a-f]+)$') { return $Matches[1] }
+    return ''
+}
+
+function Test-Jar([string]$Path) {
+    if ($ExpectedSha256) {
+        if (-not (Test-Path -PathType Leaf $Path)) { return $false }
+        return ((Get-FileHash -Algorithm SHA256 $Path).Hash -ieq $ExpectedSha256)
+    }
+    return (Test-JarSignature $Path)
 }
 
 New-Item -ItemType Directory -Force -Path $InstallDir | Out-Null
 $JarPath = Join-Path $InstallDir $JarName
+$ExpectedSha256 = ''
+if (-not $Jar) {
+    $ExpectedSha256 = Get-JarDigest
+    if (-not $ExpectedSha256) { Write-Host "Note: no checksum available for $JarName; only a basic file check will be done." }
+}
 if ($Jar) {
-    if (-not (Test-Jar $Jar)) { Fail "$Jar is not a valid JAR." }
+    if (-not (Test-JarSignature $Jar)) { Fail "$Jar is not a JAR file." }
     # Always copy: a local build can change without its version changing
     if ($Jar -ine $JarPath) {
         Write-Host "Copying $Jar to $JarPath..."
@@ -320,7 +346,7 @@ if ($Jar) {
 } elseif (Test-Jar $JarPath) {
     Write-Host "$JarName already exists in $InstallDir. Skipping download."
 } else {
-    if (Test-Path $JarPath) { Write-Host "Existing $JarName is corrupt or incomplete. Re-downloading..." }
+    if (Test-Path $JarPath) { Write-Host "Existing $JarName doesn't match the release. Re-downloading..." }
     $url = "https://github.com/$Repo/releases/download/v$Version/$JarName"
     $tmp = "$JarPath.download"
     Write-Host "Downloading $url..."
@@ -332,8 +358,12 @@ if ($Jar) {
     }
     if (-not (Test-Jar $tmp)) {
         Remove-Item -Force $tmp -ErrorAction SilentlyContinue
-        Fail 'downloaded file is not a valid JAR. Aborting.'
+        if ($ExpectedSha256) {
+            Fail "checksum mismatch for $JarName (expected sha256 $ExpectedSha256). Aborting."
+        }
+        Fail 'downloaded file is not a JAR. Aborting.'
     }
+    if ($ExpectedSha256) { Write-Host 'Checksum verified (sha256).' }
     Move-Item -Force $tmp $JarPath
 }
 
