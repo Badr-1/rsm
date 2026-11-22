@@ -5,6 +5,23 @@ TOOL_NAME="rsm"
 REPO="Badr-1/rsm"
 INSTALL_DIR="$HOME/.local/bin"
 
+# Detect the OS up front. uname is used instead of $OSTYPE, which is
+# "linux-musl" on Alpine and is unset in some non-bash environments.
+case "$(uname -s)" in
+  Linux*) OS="linux" ;;
+  Darwin*) OS="macos" ;;
+  MINGW* | MSYS* | CYGWIN*)
+    echo "Error: Windows shells (Git Bash/MSYS/Cygwin) are not supported by install.sh." >&2
+    echo "Use the PowerShell installer instead: install.ps1" >&2
+    exit 1
+    ;;
+  *)
+    echo "Error: unsupported operating system '$(uname -s)'. Only Linux and macOS are supported." >&2
+    echo "You can still run rsm manually: java -jar rsm-<version>.jar" >&2
+    exit 1
+    ;;
+esac
+
 if ! command -v curl >/dev/null 2>&1; then
   echo "Error: curl is required but not installed." >&2
   exit 1
@@ -35,7 +52,7 @@ echo "Installing $TOOL_NAME v$TOOL_VERSION..."
 # 1. Check for pdflatex
 if ! command -v pdflatex >/dev/null 2>&1; then
   echo "pdflatex not found. Installing via TeX distribution..."
-  if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+  if [[ "$OS" == "linux" ]]; then
     if command -v apt-get >/dev/null 2>&1; then
       sudo apt-get update
       sudo apt-get install -y texlive-latex-base
@@ -47,7 +64,7 @@ if ! command -v pdflatex >/dev/null 2>&1; then
       echo "Unsupported package manager. Please install TeX manually."
       exit 1
     fi
-  elif [[ "$OSTYPE" == "darwin"* ]]; then
+  elif [[ "$OS" == "macos" ]]; then
     if command -v brew >/dev/null 2>&1; then
       brew install --cask mactex
     else
@@ -118,7 +135,7 @@ PATH_UPDATED=false
 case "$(basename "${SHELL:-}")" in
   bash)
     # macOS Terminal opens login shells, which read .bash_profile, not .bashrc
-    if [[ "$OSTYPE" == "darwin"* ]]; then RC_FILE="$HOME/.bash_profile"; else RC_FILE="$HOME/.bashrc"; fi
+    if [[ "$OS" == "macos" ]]; then RC_FILE="$HOME/.bash_profile"; else RC_FILE="$HOME/.bashrc"; fi
     PATH_LINE="export PATH=\"\$PATH:$INSTALL_DIR\""
     ;;
   zsh)
