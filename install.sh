@@ -85,28 +85,85 @@ elif ((JAVA_MAJOR < REQUIRED_JAVA)); then
   exit 1
 fi
 
-# 1. Check for pdflatex
-if ! command -v pdflatex >/dev/null 2>&1; then
-  echo "pdflatex not found. Installing via TeX distribution..."
+# 1. Check for pdflatex and the LaTeX packages the resume template uses
+# (see the preamble in src/main/kotlin/LaTeXGenerator.kt). Checking only for
+# pdflatex isn't enough: minimal installs lack titlesec, enumitem, etc.
+TEX_FILES=(
+  latexsym.sty fullpage.sty titlesec.sty marvosym.sty color.sty verbatim.sty
+  enumitem.sty hyperref.sty fancyhdr.sty babel.sty english.ldf tabularx.sty
+  glyphtounicode.tex mathptmx.sty
+)
+# TeX Live package names for the files above (used with tlmgr)
+TLMGR_PACKAGES=(
+  latex-bin latexsym preprint titlesec marvosym graphics tools enumitem
+  hyperref fancyhdr babel babel-english pdftex psnfss
+)
+
+# MacTeX/BasicTeX install here, which isn't on PATH until a new shell starts
+if [[ "$OS" == "macos" && -d /Library/TeX/texbin ]]; then
+  PATH="$PATH:/Library/TeX/texbin"
+fi
+
+missing_tex_files() {
+  if ! command -v pdflatex >/dev/null 2>&1 || ! command -v kpsewhich >/dev/null 2>&1; then
+    echo "pdflatex"
+    return
+  fi
+  local f
+  for f in "${TEX_FILES[@]}"; do
+    [[ -n "$(kpsewhich "$f" 2>/dev/null)" ]] || echo "$f"
+  done
+}
+
+install_tex() {
   if [[ "$OS" == "linux" ]]; then
     if command -v apt-get >/dev/null 2>&1; then
       sudo apt-get update
-      sudo apt-get install -y texlive-latex-base
+      sudo apt-get install -y texlive-latex-base texlive-latex-recommended \
+        texlive-latex-extra texlive-fonts-recommended
     elif command -v dnf >/dev/null 2>&1; then
-      sudo dnf install -y texlive
+      # Fedora packages provide tex(<file>) virtual names
+      local deps=(/usr/bin/pdflatex) f
+      for f in "${TEX_FILES[@]}"; do deps+=("tex($f)"); done
+      sudo dnf install -y "${deps[@]}"
+    elif command -v zypper >/dev/null 2>&1; then
+      local deps=(/usr/bin/pdflatex) f
+      for f in "${TEX_FILES[@]}"; do deps+=("tex($f)"); done
+      sudo zypper --non-interactive install "${deps[@]}"
     elif command -v pacman >/dev/null 2>&1; then
-      sudo pacman -S --noconfirm texlive-latexextra
+      sudo pacman -S --needed --noconfirm texlive-basic texlive-latex \
+        texlive-latexrecommended texlive-latexextra texlive-fontsrecommended
+    elif command -v tlmgr >/dev/null 2>&1; then
+      tlmgr install "${TLMGR_PACKAGES[@]}" || sudo tlmgr install "${TLMGR_PACKAGES[@]}"
     else
-      echo "Unsupported package manager. Please install TeX manually."
-      exit 1
+      return 1
     fi
   elif [[ "$OS" == "macos" ]]; then
-    if command -v brew >/dev/null 2>&1; then
-      brew install --cask mactex
-    else
-      echo "Homebrew not found. Please install MacTeX manually."
-      exit 1
+    if ! command -v tlmgr >/dev/null 2>&1; then
+      command -v brew >/dev/null 2>&1 || return 1
+      # BasicTeX (~100 MB) instead of the full MacTeX (~5 GB); missing
+      # packages are added with tlmgr below.
+      brew install --cask basictex
+      PATH="$PATH:/Library/TeX/texbin"
     fi
+    sudo tlmgr update --self
+    sudo tlmgr install "${TLMGR_PACKAGES[@]}"
+  fi
+}
+
+MISSING_TEX="$(missing_tex_files)"
+if [[ -n "$MISSING_TEX" ]]; then
+  echo "Missing LaTeX components: $(echo $MISSING_TEX)"
+  echo "Installing LaTeX packages needed to compile resumes..."
+  if ! install_tex; then
+    echo "Error: could not install LaTeX automatically. Install a TeX distribution" >&2
+    echo "with these packages, then re-run this script: ${TLMGR_PACKAGES[*]}" >&2
+    exit 1
+  fi
+  MISSING_TEX="$(missing_tex_files)"
+  if [[ -n "$MISSING_TEX" ]]; then
+    echo "Warning: still missing after install: $(echo $MISSING_TEX)"
+    echo "'rsm compile' may fail until these are installed."
   fi
 fi
 
