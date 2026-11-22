@@ -63,11 +63,42 @@ if [[ ! -d "$INSTALL_DIR" ]]; then
   mkdir -p "$INSTALL_DIR"
 fi
 
-# 3. Download the JAR file if it doesn't already exist
-if [[ -f "$INSTALL_DIR/$JAR_NAME" ]]; then
+# 3. Download the JAR file if a valid copy doesn't already exist
+is_valid_jar() {
+  local f="$1"
+  [[ -s "$f" ]] || return 1
+  if command -v unzip >/dev/null 2>&1; then
+    unzip -tqq "$f" >/dev/null 2>&1 || return 1
+    unzip -l "$f" 2>/dev/null | grep -q "META-INF/MANIFEST.MF" || return 1
+  else
+    # Fallback: a JAR is a ZIP file, which starts with "PK\x03\x04"
+    [[ "$(head -c 4 "$f" | od -An -tx1 | tr -d ' \n')" == "504b0304" ]] || return 1
+  fi
+}
+
+JAR_PATH="$INSTALL_DIR/$JAR_NAME"
+if [[ -f "$JAR_PATH" ]] && is_valid_jar "$JAR_PATH"; then
   echo "$JAR_NAME already exists in $INSTALL_DIR. Skipping download."
 else
-  curl -L "https://github.com/Badr-1/rsm/releases/download/v$TOOL_VERSION/$JAR_NAME" -o "$INSTALL_DIR/$JAR_NAME"
+  if [[ -f "$JAR_PATH" ]]; then
+    echo "Existing $JAR_NAME is corrupt or incomplete. Re-downloading..."
+  fi
+  DOWNLOAD_URL="https://github.com/$REPO/releases/download/v$TOOL_VERSION/$JAR_NAME"
+  TMP_JAR="$(mktemp "$INSTALL_DIR/.$JAR_NAME.XXXXXX")"
+  trap 'rm -f "$TMP_JAR"' EXIT
+
+  echo "Downloading $DOWNLOAD_URL..."
+  if ! curl -fL --retry 3 --progress-bar "$DOWNLOAD_URL" -o "$TMP_JAR"; then
+    echo "Error: download failed. Check that release v$TOOL_VERSION exists:" >&2
+    echo "  https://github.com/$REPO/releases" >&2
+    exit 1
+  fi
+  if ! is_valid_jar "$TMP_JAR"; then
+    echo "Error: downloaded file is not a valid JAR. Aborting." >&2
+    exit 1
+  fi
+  mv -f "$TMP_JAR" "$JAR_PATH"
+  trap - EXIT
 fi
 # 4. Create a wrapper script
 WRAPPER_SCRIPT="$INSTALL_DIR/$TOOL_NAME"
