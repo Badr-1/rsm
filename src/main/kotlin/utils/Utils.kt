@@ -77,16 +77,24 @@ object Utils {
     }
 
     fun compilePdf(): Pair<Process, Int> {
-        val process = ProcessBuilder("pdflatex", "resume.tex")
+        val nullDevice = File(
+            if (System.getProperty("os.name").lowercase().contains("win")) "NUL" else "/dev/null"
+        )
+        // pdflatex's default "errorstopmode" stops at the first error and waits for
+        // the user to type something. Its output is hidden and nothing ever answers,
+        // so rsm would hang forever. nonstopmode + halt-on-error make it exit with an
+        // error instead, and reading stdin from the null device means any other
+        // prompt (e.g. "Enter file name:" for a missing package) gets EOF right away.
+        val process = ProcessBuilder(
+            "pdflatex",
+            "-interaction=nonstopmode",
+            "-halt-on-error",
+            "resume.tex"
+        )
             .directory(File("."))
             .redirectErrorStream(true)
-            .redirectOutput(
-                ProcessBuilder.Redirect.to(
-                    File(
-                        if (System.getProperty("os.name").lowercase().contains("win")) "NUL" else "/dev/null"
-                    )
-                )
-            )
+            .redirectInput(ProcessBuilder.Redirect.from(nullDevice))
+            .redirectOutput(ProcessBuilder.Redirect.to(nullDevice))
             .start()
 
         val exitCode = process.waitFor()
