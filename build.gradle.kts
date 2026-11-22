@@ -50,16 +50,18 @@ tasks.jar {
     duplicatesStrategy = DuplicatesStrategy.INCLUDE
 }
 
+// Offline bundle: the JAR plus the install scripts. After unzipping, run
+// `./install.sh --jar rsm-<version>.jar` (or install.ps1 on Windows).
 tasks.register<Zip>("createDistribution") {
-    dependsOn("jar")
-    from("build/libs")
-    from("scripts") {
-        into("bin")
+    dependsOn(tasks.jar)
+    from(tasks.jar)
+    from(listOf("install.sh", "uninstall.sh")) {
         filePermissions {
             unix("rwxr-xr-x")
         }
     }
-    archiveFileName.set("resume-cli-$version.zip")
+    from("install.ps1")
+    archiveFileName.set("${rootProject.name}-$version.zip")
 }
 tasks.named("check") {
     dependsOn("ktlintCheck")

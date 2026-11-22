@@ -10,6 +10,7 @@
 .EXAMPLE
   .\install.ps1                  # latest release
   .\install.ps1 -Version 2.0.2
+  .\install.ps1 -Jar .\build\libs\rsm-2.0.2.jar   # install a local build
   .\install.ps1 -Yes             # install MiKTeX without asking if LaTeX is missing
   .\install.ps1 -Uninstall
 
@@ -19,6 +20,7 @@
 [CmdletBinding()]
 param(
     [string]$Version = $env:RSM_VERSION,
+    [string]$Jar,
     [switch]$Yes,
     [switch]$SkipDeps,
     [switch]$Uninstall
@@ -82,7 +84,17 @@ if ($Uninstall) {
 }
 
 # ---------------------------------------------------------------- version
-if ([string]::IsNullOrWhiteSpace($Version)) {
+if ($Jar) {
+    if (-not (Test-Path -PathType Leaf $Jar)) { Fail "JAR file not found: $Jar" }
+    $Jar = (Resolve-Path $Jar).Path
+}
+if ([string]::IsNullOrWhiteSpace($Version) -and $Jar) {
+    if ((Split-Path -Leaf $Jar) -match "^$ToolName-(\d+\.\d+\.\d+)\.jar$") {
+        $Version = $Matches[1]
+    } else {
+        Fail "can't tell the version from '$(Split-Path -Leaf $Jar)'. Pass it too, e.g. -Version 2.0.2 -Jar FILE"
+    }
+} elseif ([string]::IsNullOrWhiteSpace($Version)) {
     Write-Host 'No version given, looking up the latest release...'
     try {
         $release = Invoke-RestMethod -UseBasicParsing -ErrorAction Stop "https://api.github.com/repos/$Repo/releases/latest"
@@ -222,7 +234,14 @@ function Test-Jar([string]$Path) {
 
 New-Item -ItemType Directory -Force -Path $InstallDir | Out-Null
 $JarPath = Join-Path $InstallDir $JarName
-if (Test-Jar $JarPath) {
+if ($Jar) {
+    if (-not (Test-Jar $Jar)) { Fail "$Jar is not a valid JAR." }
+    # Always copy: a local build can change without its version changing
+    if ($Jar -ine $JarPath) {
+        Write-Host "Copying $Jar to $JarPath..."
+        Copy-Item -Force $Jar $JarPath
+    }
+} elseif (Test-Jar $JarPath) {
     Write-Host "$JarName already exists in $InstallDir. Skipping download."
 } else {
     if (Test-Path $JarPath) { Write-Host "Existing $JarName is corrupt or incomplete. Re-downloading..." }

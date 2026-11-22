@@ -22,11 +22,6 @@ case "$(uname -s)" in
     ;;
 esac
 
-if ! command -v curl >/dev/null 2>&1; then
-  echo "Error: curl is required but not installed." >&2
-  exit 1
-fi
-
 usage() {
   cat <<EOF
 Usage: install.sh [VERSION] [options]
@@ -34,6 +29,8 @@ Usage: install.sh [VERSION] [options]
 Install $TOOL_NAME. VERSION defaults to the latest release (e.g. 2.0.2 or v2.0.2).
 
 Options:
+      --jar FILE   Install from a local JAR instead of downloading
+                   (e.g. build/libs/$TOOL_NAME-2.0.2.jar from a source build)
   -y, --yes        Install missing system packages (LaTeX) without asking
       --skip-deps  Don't install system packages; only warn if they're missing
   -h, --help       Show this help
@@ -43,8 +40,14 @@ EOF
 ASSUME_YES=false
 SKIP_DEPS=false
 TOOL_VERSION=""
+LOCAL_JAR=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
+    --jar)
+      if [[ $# -lt 2 ]]; then echo "Error: --jar needs a file path" >&2; exit 1; fi
+      LOCAL_JAR="$2"
+      shift
+      ;;
     -y | --yes) ASSUME_YES=true ;;
     --skip-deps) SKIP_DEPS=true ;;
     -h | --help) usage; exit 0 ;;
@@ -73,9 +76,28 @@ confirm() {
   [[ "$reply" =~ ^[Yy]([Ee][Ss])?$ ]]
 }
 
-# Resolve version: use the argument if given, otherwise the latest GitHub release.
+if [[ -n "$LOCAL_JAR" ]]; then
+  if [[ ! -f "$LOCAL_JAR" ]]; then
+    echo "Error: JAR file not found: $LOCAL_JAR" >&2
+    exit 1
+  fi
+  LOCAL_JAR="$(cd "$(dirname "$LOCAL_JAR")" && pwd)/$(basename "$LOCAL_JAR")"
+elif ! command -v curl >/dev/null 2>&1; then
+  echo "Error: curl is required but not installed." >&2
+  exit 1
+fi
+
+# Resolve version: use the argument if given, then the local JAR's file name
+# (rsm-X.Y.Z.jar), otherwise the latest GitHub release.
 TOOL_VERSION="${TOOL_VERSION#v}" # accept both "2.0.2" and "v2.0.2"
-if [[ -z "$TOOL_VERSION" ]]; then
+if [[ -z "$TOOL_VERSION" && -n "$LOCAL_JAR" ]]; then
+  if [[ "$(basename "$LOCAL_JAR")" =~ ^$TOOL_NAME-([0-9]+\.[0-9]+\.[0-9]+)\.jar$ ]]; then
+    TOOL_VERSION="${BASH_REMATCH[1]}"
+  else
+    echo "Error: can't tell the version from '$(basename "$LOCAL_JAR")'. Pass it too, e.g. ./install.sh 2.0.2 --jar FILE" >&2
+    exit 1
+  fi
+elif [[ -z "$TOOL_VERSION" ]]; then
   echo "No version given, looking up the latest release..."
   TOOL_VERSION="$(curl -fsSL "https://api.github.com/repos/$REPO/releases/latest" \
     | sed -n 's/.*"tag_name"[[:space:]]*:[[:space:]]*"v\{0,1\}\([^"]*\)".*/\1/p' \
@@ -238,7 +260,17 @@ is_valid_jar() {
 }
 
 JAR_PATH="$INSTALL_DIR/$JAR_NAME"
-if [[ -f "$JAR_PATH" ]] && is_valid_jar "$JAR_PATH"; then
+if [[ -n "$LOCAL_JAR" ]]; then
+  if ! is_valid_jar "$LOCAL_JAR"; then
+    echo "Error: $LOCAL_JAR is not a valid JAR." >&2
+    exit 1
+  fi
+  # Always copy: a local build can change without its version changing
+  if [[ "$LOCAL_JAR" != "$JAR_PATH" ]]; then
+    echo "Copying $LOCAL_JAR to $JAR_PATH..."
+    cp -f "$LOCAL_JAR" "$JAR_PATH"
+  fi
+elif [[ -f "$JAR_PATH" ]] && is_valid_jar "$JAR_PATH"; then
   echo "$JAR_NAME already exists in $INSTALL_DIR. Skipping download."
 else
   if [[ -f "$JAR_PATH" ]]; then
