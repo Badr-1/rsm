@@ -42,6 +42,16 @@ object Utils {
         }
     }
 
+    // Characters that make pdflatex fail when they appear unescaped in text.
+    // Ones already escaped (preceded by a backslash, as stored by the prompts
+    // above) are left alone, so this is safe to apply to any stored content.
+    private val unescapedLatexChars = Regex("""(?<!\\)[&%$#_^]""")
+
+    /** Escapes only the special characters that aren't escaped yet (idempotent). */
+    fun String.escapeUnescapedLatex(): String = replace(unescapedLatexChars) { match ->
+        if (match.value == "^") "\\textasciicircum{}" else "\\" + match.value
+    }
+
     fun readLineRequired(prompt: String, validation: (String) -> Boolean = { true }): String {
         return KInquirer.promptInput(
             message = prompt,

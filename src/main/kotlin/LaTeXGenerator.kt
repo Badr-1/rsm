@@ -11,6 +11,7 @@ import models.SectionType.PERSONAL_INFO
 import models.SectionType.PROJECTS
 import models.SectionType.TECHNICAL_SKILLS
 import models.TechnicalSkills
+import utils.Utils.escapeUnescapedLatex
 
 object LaTeXGenerator {
 
@@ -149,10 +150,11 @@ object LaTeXGenerator {
     private fun generatePersonalInfo(info: PersonalInfo): String {
         return buildString {
             appendLine("\\begin{center}")
-            appendLine("\\textbf{\\Huge \\scshape ${info.name}} \\\\ \\vspace{1pt}")
-            append("\\small ${info.phone} $|$ \\href{mailto:${info.email}}{\\underline{${info.email}}}")
-            if (info.linkedin.isNotEmpty()) append("$|$ \\href{${info.linkedin}}{\\underline{${extractUsernameFromUrl(info.linkedin)}}}")
-            if (info.github.isNotEmpty()) appendLine("$|$ \\href{${info.github}}{\\underline{${extractUsernameFromUrl(info.github)}}}")
+            appendLine("\\textbf{\\Huge \\scshape ${info.name.tex()}} \\\\ \\vspace{1pt}")
+            // URLs inside \\href{...} stay raw: hyperref handles their special characters itself
+            append("\\small ${info.phone.tex()} $|$ \\href{mailto:${info.email}}{\\underline{${info.email.tex()}}}")
+            if (info.linkedin.isNotEmpty()) append("$|$ \\href{${info.linkedin}}{\\underline{${extractUsernameFromUrl(info.linkedin).tex()}}}")
+            if (info.github.isNotEmpty()) appendLine("$|$ \\href{${info.github}}{\\underline{${extractUsernameFromUrl(info.github).tex()}}}")
             appendLine("\\end{center}")
         }
     }
@@ -167,8 +169,8 @@ object LaTeXGenerator {
 
             education.forEach { edu ->
                 appendLine("    \\resumeSubheading")
-                appendLine("      {${edu.institution}}{${edu.location}}")
-                appendLine("      {${edu.degree}${if (edu.gpa.isNotEmpty()) "; GPA: ${edu.gpa}" else ""}}{${edu.graduationDate}}")
+                appendLine("      {${edu.institution.tex()}}{${edu.location.tex()}}")
+                appendLine("      {${edu.degree.tex()}${if (edu.gpa.isNotEmpty()) "; GPA: ${edu.gpa.tex()}" else ""}}{${edu.graduationDate.tex()}}")
             }
 
             appendLine("  \\resumeSubHeadingListEnd")
@@ -185,13 +187,13 @@ object LaTeXGenerator {
 
             experience.forEach { exp ->
                 appendLine("    \\resumeSubheading")
-                appendLine("      {${exp.position}}{${exp.date}}")
-                appendLine("      {${exp.company}}{${exp.location}}")
+                appendLine("      {${exp.position.tex()}}{${exp.date.tex()}}")
+                appendLine("      {${exp.company.tex()}}{${exp.location.tex()}}")
 
                 if (exp.bullets.isNotEmpty()) {
                     appendLine("      \\resumeItemListStart")
                     exp.bullets.forEach { bullet ->
-                        appendLine("        \\resumeItem{$bullet}")
+                        appendLine("        \\resumeItem{${bullet.tex()}}")
                     }
                     appendLine("      \\resumeItemListEnd")
                 }
@@ -211,12 +213,12 @@ object LaTeXGenerator {
 
             projects.forEach { project ->
                 appendLine("      \\resumeProjectHeading")
-                appendLine("          {\\textbf{${project.name}} $|$ \\emph{${project.technologies}}}{${project.date}}")
+                appendLine("          {\\textbf{${project.name.tex()}} $|$ \\emph{${project.technologies.tex()}}}{${project.date.tex()}}")
 
                 if (project.bullets.isNotEmpty()) {
                     appendLine("          \\resumeItemListStart")
                     project.bullets.forEach { bullet ->
-                        appendLine("            \\resumeItem{$bullet}")
+                        appendLine("            \\resumeItem{${bullet.tex()}}")
                     }
                     appendLine("          \\resumeItemListEnd")
                 }
@@ -240,9 +242,9 @@ object LaTeXGenerator {
 
             technicalSkills.entries.forEach { (category, skills) ->
                 if (skills.isNotEmpty() && technicalSkills.isFlattened()) { // uncategorized skills
-                    skillCategories.add(skills.joinToString(", "))
+                    skillCategories.add(skills.joinToString(", ").tex())
                 } else if (skills.isNotEmpty()) { // categorized skills
-                    skillCategories.add("\\textbf{$category}: ${skills.joinToString(", ")}")
+                    skillCategories.add("\\textbf{${category.tex()}}: ${skills.joinToString(", ").tex()}")
                 }
             }
             appendLine("     ${skillCategories.joinToString(" \\\\\n     ")}")
@@ -261,12 +263,12 @@ object LaTeXGenerator {
             appendLine("  \\resumeSubHeadingListStart")
             groupByOrg.forEach { (org, certs) ->
                 if (certs.size == 1) {
-                    appendLine("\\resumeProjectHeading{\\textbf{$org} ${certs[0].name}}{${certs[0].issueDate}}")
+                    appendLine("\\resumeProjectHeading{\\textbf{${org.tex()}} ${certs[0].name.tex()}}{${certs[0].issueDate.tex()}}")
                 } else {
-                    appendLine("\\resumeProjectHeading{\\textbf{$org}}{${certs.last().issueDate} -- ${certs.first().issueDate}}")
+                    appendLine("\\resumeProjectHeading{\\textbf{${org.tex()}}}{${certs.last().issueDate.tex()} -- ${certs.first().issueDate.tex()}}")
                     appendLine("\\resumeItemListStart")
                     certs.forEach { cert ->
-                        appendLine("\\resumeItem{${cert.name} (${cert.issueDate})}")
+                        appendLine("\\resumeItem{${cert.name.tex()} (${cert.issueDate.tex()})}")
                     }
                     appendLine("\\resumeItemListEnd")
                 }
@@ -283,6 +285,8 @@ object LaTeXGenerator {
 \end{document}
         """.trimIndent()
     }
+
+    private fun String.tex() = escapeUnescapedLatex()
 
     private fun extractUsernameFromUrl(url: String): String {
         return if (url.contains("linkedin.com")) {
