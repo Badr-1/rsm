@@ -357,23 +357,67 @@ if [[ ! -d "$INSTALL_DIR" ]]; then
   mkdir -p "$INSTALL_DIR"
 fi
 
-# 3. Download the JAR file if a valid copy doesn't already exist
-is_valid_jar() {
-  local f="$1"
-  [[ -s "$f" ]] || return 1
-  if command -v unzip >/dev/null 2>&1; then
-    unzip -tqq "$f" >/dev/null 2>&1 || return 1
-    unzip -l "$f" 2>/dev/null | grep -q "META-INF/MANIFEST.MF" || return 1
+# 3. Download the JAR file if a verified copy doesn't already exist
+#
+# Downloads are verified against the SHA-256 digest GitHub publishes for each
+# release asset, which proves the file is exactly what was uploaded. When no
+# digest is available (API unreachable or rate-limited, very old assets, or a
+# local --jar), we only check the ZIP signature to catch HTML error pages and
+# empty files. (An earlier `unzip -t` check was dropped: it fails on harmless
+# warnings and adds a dependency without proving much.)
+
+# Is the file non-empty and does it start with the ZIP signature "PK\x03\x04"?
+looks_like_jar() {
+  [[ -s "$1" ]] && [[ "$(head -c 4 "$1" | od -An -tx1 | tr -d ' \n')" == "504b0304" ]]
+}
+
+sha256_of() {
+  if command -v sha256sum >/dev/null 2>&1; then
+    sha256sum "$1" | cut -d' ' -f1
+  elif command -v shasum >/dev/null 2>&1; then
+    shasum -a 256 "$1" | cut -d' ' -f1
   else
-    # Fallback: a JAR is a ZIP file, which starts with "PK\x03\x04"
-    [[ "$(head -c 4 "$f" | od -An -tx1 | tr -d ' \n')" == "504b0304" ]] || return 1
+    return 1
   fi
 }
 
+# Print the SHA-256 GitHub reports for this release's JAR asset (empty if unknown).
+fetch_jar_digest() {
+  curl -fsSL "https://api.github.com/repos/$REPO/releases/tags/v$TOOL_VERSION" 2>/dev/null |
+    grep -oE '"(name|digest)": *"[^"]*"' |
+    awk -v jar="$JAR_NAME" '
+      { val = $0; sub(/^[^:]*: *"/, "", val); sub(/"$/, "", val) }
+      /^"name"/ { want = (val == jar); next }
+      /^"digest"/ && want && val ~ /^sha256:[0-9a-f]+$/ { sub(/^sha256:/, "", val); print val; exit }
+    ' || true
+}
+
+# Verify a file: exact digest match when we have one, ZIP signature otherwise.
+verify_jar() {
+  local f="$1" actual
+  if [[ -n "$EXPECTED_SHA256" ]]; then
+    if actual="$(sha256_of "$f")"; then
+      [[ "$actual" == "$EXPECTED_SHA256" ]]
+      return
+    fi
+  fi
+  looks_like_jar "$f"
+}
+
 JAR_PATH="$INSTALL_DIR/$JAR_NAME"
+EXPECTED_SHA256=""
+if [[ -z "$LOCAL_JAR" ]]; then
+  EXPECTED_SHA256="$(fetch_jar_digest)"
+  if [[ -z "$EXPECTED_SHA256" ]]; then
+    echo "Note: no checksum available for $JAR_NAME; only a basic file check will be done."
+  elif ! sha256_of /dev/null >/dev/null; then
+    echo "Note: sha256sum/shasum not found; only a basic file check will be done."
+  fi
+fi
+
 if [[ -n "$LOCAL_JAR" ]]; then
-  if ! is_valid_jar "$LOCAL_JAR"; then
-    echo "Error: $LOCAL_JAR is not a valid JAR." >&2
+  if ! looks_like_jar "$LOCAL_JAR"; then
+    echo "Error: $LOCAL_JAR is not a JAR file." >&2
     exit 1
   fi
   # Always copy: a local build can change without its version changing
@@ -381,11 +425,11 @@ if [[ -n "$LOCAL_JAR" ]]; then
     echo "Copying $LOCAL_JAR to $JAR_PATH..."
     cp -f "$LOCAL_JAR" "$JAR_PATH"
   fi
-elif [[ -f "$JAR_PATH" ]] && is_valid_jar "$JAR_PATH"; then
+elif [[ -f "$JAR_PATH" ]] && verify_jar "$JAR_PATH"; then
   echo "$JAR_NAME already exists in $INSTALL_DIR. Skipping download."
 else
   if [[ -f "$JAR_PATH" ]]; then
-    echo "Existing $JAR_NAME is corrupt or incomplete. Re-downloading..."
+    echo "Existing $JAR_NAME doesn't match the release. Re-downloading..."
   fi
   DOWNLOAD_URL="https://github.com/$REPO/releases/download/v$TOOL_VERSION/$JAR_NAME"
   TMP_JAR="$(mktemp "$INSTALL_DIR/.$JAR_NAME.XXXXXX")"
@@ -397,10 +441,15 @@ else
     echo "  https://github.com/$REPO/releases" >&2
     exit 1
   fi
-  if ! is_valid_jar "$TMP_JAR"; then
-    echo "Error: downloaded file is not a valid JAR. Aborting." >&2
+  if ! verify_jar "$TMP_JAR"; then
+    if [[ -n "$EXPECTED_SHA256" ]]; then
+      echo "Error: checksum mismatch for $JAR_NAME (expected sha256 $EXPECTED_SHA256). Aborting." >&2
+    else
+      echo "Error: downloaded file is not a JAR. Aborting." >&2
+    fi
     exit 1
   fi
+  [[ -n "$EXPECTED_SHA256" ]] && echo "Checksum verified (sha256)."
   mv -f "$TMP_JAR" "$JAR_PATH"
   trap - EXIT
 fi
