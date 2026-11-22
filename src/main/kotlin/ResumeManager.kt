@@ -533,7 +533,7 @@ object ResumeManager {
         println("🔨 Compiling LaTeX to PDF...")
 
         try {
-            val (process, exitCode) = compilePdf()
+            val (_, exitCode) = compilePdf()
 
             if (exitCode == 0) {
                 println("✅ Successfully compiled to resume.pdf")
@@ -550,15 +550,34 @@ object ResumeManager {
                 println("💡 Check resume.log for details.")
             } else {
                 println("❌ Compilation failed with exit code: $exitCode")
-                val output = process.inputStream.bufferedReader().readText()
-                if (output.isNotEmpty()) {
-                    println("Error output:")
-                    println(output)
-                }
+                printLatexErrors()
             }
         } catch (e: Exception) {
             println("❌ Failed to compile: ${e.message}")
             println("💡 Make sure pdflatex is installed and in your PATH")
+        }
+    }
+
+    private fun printLatexErrors() {
+        val logFile = File("resume.log")
+        if (!logFile.exists()) {
+            println("💡 No resume.log was produced. Make sure pdflatex is installed correctly.")
+            return
+        }
+        val errors = FileUtils.parseLatexLog(logFile.readLines(), resumeFile.readLines())
+        if (errors.isEmpty()) {
+            println("💡 See resume.log for details.")
+            return
+        }
+        errors.take(5).forEach { error ->
+            println("  • ${error.message}")
+            if (error.line != null) {
+                println("    resume.tex line ${error.line}: ${error.source ?: ""}")
+            }
+            FileUtils.hintFor(error)?.let { println("    💡 $it") }
+        }
+        if (errors.size > 5) {
+            println("  … and ${errors.size - 5} more, see resume.log")
         }
     }
 
