@@ -2,8 +2,32 @@
 set -e
 
 TOOL_NAME="rsm"
-TOOL_VERSION="$1"
+REPO="Badr-1/rsm"
 INSTALL_DIR="$HOME/.local/bin"
+
+if ! command -v curl >/dev/null 2>&1; then
+  echo "Error: curl is required but not installed." >&2
+  exit 1
+fi
+
+# Resolve version: use the argument if given, otherwise the latest GitHub release.
+TOOL_VERSION="${1#v}" # accept both "2.0.2" and "v2.0.2"
+if [[ -z "$TOOL_VERSION" ]]; then
+  echo "No version given, looking up the latest release..."
+  TOOL_VERSION="$(curl -fsSL "https://api.github.com/repos/$REPO/releases/latest" \
+    | sed -n 's/.*"tag_name"[[:space:]]*:[[:space:]]*"v\{0,1\}\([^"]*\)".*/\1/p' \
+    | head -n 1)" || true
+  if [[ -z "$TOOL_VERSION" ]]; then
+    echo "Error: could not determine the latest release. Pass a version, e.g. ./install.sh 2.0.2" >&2
+    exit 1
+  fi
+fi
+
+if [[ ! "$TOOL_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+  echo "Error: invalid version '$TOOL_VERSION'. Expected format X.Y.Z (e.g. 2.0.2)." >&2
+  exit 1
+fi
+
 JAR_NAME="$TOOL_NAME-$TOOL_VERSION.jar"
 
 echo "Installing $TOOL_NAME v$TOOL_VERSION..."
