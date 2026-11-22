@@ -13,8 +13,77 @@ A command-line tool for managing LaTeX resumes with Git branching for role-speci
 ## Prerequisites
 
 - Java 17 or higher
-- Git
-- LaTeX distribution (for compiling to PDF)
+- A LaTeX distribution with the packages the template uses (for `rsm compile`). The installers detect missing packages and offer to install them.
+- Git is optional: rsm has Git built in (via JGit), but you'll want the `git` CLI to inspect or rebase your branches yourself.
+
+## Installation
+
+### Linux and macOS
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Badr-1/rsm/main/install.sh | bash
+```
+
+This installs the latest release into `~/.local/bin`, adds it to your `PATH`, and sets up shell completion for bash, zsh or fish. Restart your terminal afterwards.
+
+To pass options, use `bash -s --`:
+
+```bash
+# a specific version
+curl -fsSL https://raw.githubusercontent.com/Badr-1/rsm/main/install.sh | bash -s -- 2.0.2
+# install missing LaTeX packages without asking
+curl -fsSL https://raw.githubusercontent.com/Badr-1/rsm/main/install.sh | bash -s -- --yes
+```
+
+| Option | Description |
+|---|---|
+| `VERSION` | Version to install, e.g. `2.0.2`. Defaults to the latest release. |
+| `--jar FILE` | Install from a local JAR instead of downloading it. |
+| `-y`, `--yes` | Install missing LaTeX packages without asking (uses `sudo`). |
+| `--skip-deps` | Never install system packages; only warn about missing ones. |
+| `-h`, `--help` | Show help. |
+
+If LaTeX packages are missing, the installer asks before running your package manager (apt, dnf, zypper, pacman or tlmgr; on macOS, Homebrew's BasicTeX plus tlmgr).
+
+### Windows
+
+In PowerShell:
+
+```powershell
+irm https://raw.githubusercontent.com/Badr-1/rsm/main/install.ps1 | iex
+```
+
+This installs into `%LOCALAPPDATA%\Programs\rsm` and adds it to your user `PATH`. If LaTeX is missing it offers to install MiKTeX via `winget`. To pass options, download the script and run it, e.g. `.\install.ps1 -Version 2.0.2`, `.\install.ps1 -Yes` or `.\install.ps1 -SkipDeps`. Shell completion isn't available on Windows.
+
+### Uninstall
+
+```bash
+# Linux / macOS
+curl -fsSL https://raw.githubusercontent.com/Badr-1/rsm/main/uninstall.sh | bash
+```
+
+```powershell
+# Windows
+.\install.ps1 -Uninstall
+```
+
+This removes rsm, its completions and the `PATH` entries the installer added. Java, LaTeX and your resume repositories are left alone.
+
+### Build from source
+
+The project depends on a fork of kotlin-inquirer included as a Git submodule, so clone with `--recursive`:
+
+```bash
+git clone --recursive https://github.com/Badr-1/rsm.git
+cd rsm
+# already cloned without --recursive? run:
+# git submodule update --init
+
+./gradlew jar
+./install.sh --jar build/libs/rsm-<version>.jar   # Windows: .\install.ps1 -Jar build\libs\rsm-<version>.jar
+```
+
+`./gradlew createDistribution` builds an offline bundle (`build/distributions/rsm-<version>.zip`) with the JAR and the install scripts. Unzip it and run `./install.sh --jar rsm-<version>.jar`.
 
 ## Usage
 
