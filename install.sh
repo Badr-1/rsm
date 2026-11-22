@@ -24,11 +24,14 @@ esac
 
 usage() {
   cat <<EOF
-Usage: install.sh [VERSION] [options]
+Usage: install.sh [VERSION | --latest] [options]
 
-Install $TOOL_NAME. VERSION defaults to the latest release (e.g. 2.0.2 or v2.0.2).
+Install $TOOL_NAME. Without VERSION or --latest, shows the available GitHub
+releases to choose from.
 
 Options:
+  VERSION          Install this release (e.g. 2.0.2 or v2.0.2)
+      --latest     Install the latest release without asking
       --jar FILE   Install from a local JAR instead of downloading
                    (e.g. build/libs/$TOOL_NAME-2.0.2.jar from a source build)
   -y, --yes        Install missing system packages (LaTeX) without asking
@@ -41,8 +44,10 @@ ASSUME_YES=false
 SKIP_DEPS=false
 TOOL_VERSION=""
 LOCAL_JAR=""
+USE_LATEST=false
 while [[ $# -gt 0 ]]; do
   case "$1" in
+    --latest) USE_LATEST=true ;;
     --jar)
       if [[ $# -lt 2 ]]; then echo "Error: --jar needs a file path" >&2; exit 1; fi
       LOCAL_JAR="$2"
@@ -76,6 +81,110 @@ confirm() {
   [[ "$reply" =~ ^[Yy]([Ee][Ss])?$ ]]
 }
 
+if [[ "$USE_LATEST" == true && -n "$TOOL_VERSION" ]]; then
+  echo "Error: use either VERSION or --latest, not both" >&2; exit 1
+fi
+if [[ "$USE_LATEST" == true && -n "$LOCAL_JAR" ]]; then
+  echo "Error: --latest can't be combined with --jar" >&2; exit 1
+fi
+
+# Print the installable releases, newest first, one per line:
+#   <version><TAB><prerelease true|false><TAB><published date>
+# Drafts and releases without an $TOOL_NAME-<version>.jar asset are skipped.
+# Parsed with grep/awk so jq isn't required.
+list_releases() {
+  curl -fsSL "https://api.github.com/repos/$REPO/releases?per_page=30" |
+    grep -oE '"(tag_name|draft|prerelease|published_at|name)": *("[^"]*"|true|false|null)' |
+    awk -v tool="$TOOL_NAME" '
+      function flush() {
+        if (tag != "" && draft != "true" && has_jar && ver ~ /^[0-9]+\.[0-9]+\.[0-9]+$/)
+          printf "%s\t%s\t%s\n", ver, (pre == "true" ? "true" : "false"), substr(date, 1, 10)
+        tag = ""
+      }
+      {
+        key = $0; sub(/^"/, "", key); sub(/".*/, "", key)
+        val = $0; sub(/^[^:]*: */, "", val); gsub(/"/, "", val)
+      }
+      key == "tag_name" {
+        flush(); tag = val; ver = val; sub(/^v/, "", ver)
+        draft = ""; pre = ""; date = ""; has_jar = 0
+        next
+      }
+      key == "draft" { draft = val }
+      key == "prerelease" { pre = val }
+      key == "published_at" && date == "" { date = val }
+      key == "name" && val == tool "-" ver ".jar" { has_jar = 1 }
+      END { flush() }
+    '
+}
+
+# Show the releases and let the user pick one; sets TOOL_VERSION.
+# Without a terminal (e.g. CI), falls back to the latest stable release.
+choose_version() {
+  local releases
+  echo "Fetching available releases..."
+  releases="$(list_releases)" || true
+  if [[ -z "$releases" ]]; then
+    echo "Error: could not fetch releases from GitHub. Pass a version, e.g. ./install.sh 2.0.2" >&2
+    exit 1
+  fi
+
+  local versions=() labels=() latest_idx="" i=0 v pre date label
+  while IFS=$'\t' read -r v pre date; do
+    i=$((i + 1))
+    versions+=("$v")
+    label="v$v"
+    [[ -n "$date" ]] && label+="  ($date)"
+    if [[ "$pre" == true ]]; then
+      label+="  [pre-release]"
+    elif [[ -z "$latest_idx" ]]; then
+      latest_idx=$i
+      label+="  [latest]"
+    fi
+    labels+=("$label")
+  done <<<"$releases"
+  local default="${latest_idx:-1}"
+
+  if ! { exec 3</dev/tty; } 2>/dev/null; then
+    TOOL_VERSION="${versions[default - 1]}"
+    echo "No terminal to choose a version on; installing v$TOOL_VERSION (pass VERSION or --latest to be explicit)."
+    return
+  fi
+
+  {
+    echo
+    echo "Available $TOOL_NAME releases:"
+    for ((i = 0; i < ${#versions[@]}; i++)); do
+      printf '  %2d) %s\n' $((i + 1)) "${labels[i]}"
+    done
+    echo
+  } >/dev/tty
+
+  local reply
+  while true; do
+    printf 'Choose a release [%d]: ' "$default" >/dev/tty
+    if ! read -r reply <&3; then
+      echo >/dev/tty
+      echo "Error: no choice made." >&2
+      exit 1
+    fi
+    reply="${reply:-$default}"
+    if [[ "$reply" =~ ^[0-9]+$ ]] && ((reply >= 1 && reply <= ${#versions[@]})); then
+      TOOL_VERSION="${versions[reply - 1]}"
+      break
+    fi
+    # Also accept a version typed directly, e.g. "2.0.2" or "v2.0.2"
+    for v in "${versions[@]}"; do
+      if [[ "$v" == "${reply#v}" ]]; then
+        TOOL_VERSION="$v"
+        break 2
+      fi
+    done
+    echo "Invalid choice '$reply'. Enter a number from 1 to ${#versions[@]}." >/dev/tty
+  done
+  exec 3<&-
+}
+
 if [[ -n "$LOCAL_JAR" ]]; then
   if [[ ! -f "$LOCAL_JAR" ]]; then
     echo "Error: JAR file not found: $LOCAL_JAR" >&2
@@ -88,7 +197,7 @@ elif ! command -v curl >/dev/null 2>&1; then
 fi
 
 # Resolve version: use the argument if given, then the local JAR's file name
-# (rsm-X.Y.Z.jar), otherwise the latest GitHub release.
+# (rsm-X.Y.Z.jar), then --latest; otherwise let the user pick a release.
 TOOL_VERSION="${TOOL_VERSION#v}" # accept both "2.0.2" and "v2.0.2"
 if [[ -z "$TOOL_VERSION" && -n "$LOCAL_JAR" ]]; then
   if [[ "$(basename "$LOCAL_JAR")" =~ ^$TOOL_NAME-([0-9]+\.[0-9]+\.[0-9]+)\.jar$ ]]; then
@@ -97,8 +206,10 @@ if [[ -z "$TOOL_VERSION" && -n "$LOCAL_JAR" ]]; then
     echo "Error: can't tell the version from '$(basename "$LOCAL_JAR")'. Pass it too, e.g. ./install.sh 2.0.2 --jar FILE" >&2
     exit 1
   fi
+elif [[ -z "$TOOL_VERSION" && "$USE_LATEST" != true ]]; then
+  choose_version
 elif [[ -z "$TOOL_VERSION" ]]; then
-  echo "No version given, looking up the latest release..."
+  echo "Looking up the latest release..."
   TOOL_VERSION="$(curl -fsSL "https://api.github.com/repos/$REPO/releases/latest" \
     | sed -n 's/.*"tag_name"[[:space:]]*:[[:space:]]*"v\{0,1\}\([^"]*\)".*/\1/p' \
     | head -n 1)" || true
