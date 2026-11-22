@@ -27,8 +27,54 @@ if ! command -v curl >/dev/null 2>&1; then
   exit 1
 fi
 
+usage() {
+  cat <<EOF
+Usage: install.sh [VERSION] [options]
+
+Install $TOOL_NAME. VERSION defaults to the latest release (e.g. 2.0.2 or v2.0.2).
+
+Options:
+  -y, --yes        Install missing system packages (LaTeX) without asking
+      --skip-deps  Don't install system packages; only warn if they're missing
+  -h, --help       Show this help
+EOF
+}
+
+ASSUME_YES=false
+SKIP_DEPS=false
+TOOL_VERSION=""
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -y | --yes) ASSUME_YES=true ;;
+    --skip-deps) SKIP_DEPS=true ;;
+    -h | --help) usage; exit 0 ;;
+    -*) echo "Error: unknown option '$1'" >&2; usage >&2; exit 1 ;;
+    *)
+      if [[ -n "$TOOL_VERSION" ]]; then
+        echo "Error: more than one version given" >&2; exit 1
+      fi
+      TOOL_VERSION="$1"
+      ;;
+  esac
+  shift
+done
+
+# Ask a yes/no question. Reads from /dev/tty so it also works with `curl ... | bash`.
+# Returns non-zero when there's no terminal to ask on (and --yes wasn't given).
+confirm() {
+  [[ "$ASSUME_YES" == true ]] && return 0
+  if ! { exec 3</dev/tty; } 2>/dev/null; then
+    return 1
+  fi
+  local reply
+  printf '%s [y/N] ' "$1" >/dev/tty
+  read -r reply <&3 || reply=""
+  exec 3<&-
+  [[ "$reply" =~ ^[Yy]([Ee][Ss])?$ ]]
+}
+
 # Resolve version: use the argument if given, otherwise the latest GitHub release.
-TOOL_VERSION="${1#v}" # accept both "2.0.2" and "v2.0.2"
+TOOL_VERSION="${TOOL_VERSION#v}" # accept both "2.0.2" and "v2.0.2"
 if [[ -z "$TOOL_VERSION" ]]; then
   echo "No version given, looking up the latest release..."
   TOOL_VERSION="$(curl -fsSL "https://api.github.com/repos/$REPO/releases/latest" \
@@ -118,8 +164,8 @@ missing_tex_files() {
 install_tex() {
   if [[ "$OS" == "linux" ]]; then
     if command -v apt-get >/dev/null 2>&1; then
-      sudo apt-get update
-      sudo apt-get install -y texlive-latex-base texlive-latex-recommended \
+      sudo apt-get update &&
+        sudo apt-get install -y texlive-latex-base texlive-latex-recommended \
         texlive-latex-extra texlive-fonts-recommended
     elif command -v dnf >/dev/null 2>&1; then
       # Fedora packages provide tex(<file>) virtual names
@@ -143,27 +189,32 @@ install_tex() {
       command -v brew >/dev/null 2>&1 || return 1
       # BasicTeX (~100 MB) instead of the full MacTeX (~5 GB); missing
       # packages are added with tlmgr below.
-      brew install --cask basictex
+      brew install --cask basictex || return 1
       PATH="$PATH:/Library/TeX/texbin"
     fi
-    sudo tlmgr update --self
-    sudo tlmgr install "${TLMGR_PACKAGES[@]}"
+    sudo tlmgr update --self && sudo tlmgr install "${TLMGR_PACKAGES[@]}"
   fi
 }
 
 MISSING_TEX="$(missing_tex_files)"
 if [[ -n "$MISSING_TEX" ]]; then
-  echo "Missing LaTeX components: $(echo $MISSING_TEX)"
-  echo "Installing LaTeX packages needed to compile resumes..."
-  if ! install_tex; then
+  echo "Missing LaTeX components needed by 'rsm compile': $(echo $MISSING_TEX)"
+  if [[ "$SKIP_DEPS" == true ]]; then
+    echo "Skipping LaTeX install (--skip-deps). Install a TeX distribution with these"
+    echo "packages before using 'rsm compile': ${TLMGR_PACKAGES[*]}"
+  elif ! confirm "Install them now? This uses your system package manager and may ask for your sudo password."; then
+    echo "Skipping LaTeX install. Re-run with --yes to install automatically, or install"
+    echo "a TeX distribution with these packages: ${TLMGR_PACKAGES[*]}"
+  elif ! install_tex; then
     echo "Error: could not install LaTeX automatically. Install a TeX distribution" >&2
     echo "with these packages, then re-run this script: ${TLMGR_PACKAGES[*]}" >&2
     exit 1
-  fi
-  MISSING_TEX="$(missing_tex_files)"
-  if [[ -n "$MISSING_TEX" ]]; then
-    echo "Warning: still missing after install: $(echo $MISSING_TEX)"
-    echo "'rsm compile' may fail until these are installed."
+  else
+    MISSING_TEX="$(missing_tex_files)"
+    if [[ -n "$MISSING_TEX" ]]; then
+      echo "Warning: still missing after install: $(echo $MISSING_TEX)"
+      echo "'rsm compile' may fail until these are installed."
+    fi
   fi
 fi
 
