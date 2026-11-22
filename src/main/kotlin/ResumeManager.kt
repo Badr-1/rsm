@@ -20,6 +20,7 @@ import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.errors.EmptyCommitException
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import utils.FileUtils
+import utils.Utils
 import utils.Utils.compilePdf
 import utils.Utils.promptSection
 import utils.Utils.promptSectionAndTargetBranch
@@ -544,6 +545,9 @@ object ResumeManager {
                 if (open) {
                     openPdf()
                 }
+            } else if (exitCode == null) {
+                println("❌ Compilation timed out after ${Utils.COMPILE_TIMEOUT_SECONDS}s and was stopped.")
+                println("💡 Check resume.log for details.")
             } else {
                 println("❌ Compilation failed with exit code: $exitCode")
                 val output = process.inputStream.bufferedReader().readText()

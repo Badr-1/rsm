@@ -10,8 +10,12 @@ import com.github.kinquirer.core.Choice
 import models.OrderableBullets
 import models.SectionType
 import java.io.File
+import java.util.concurrent.TimeUnit
 
 object Utils {
+    // A resume compiles in well under a second; this only guards against hangs.
+    const val COMPILE_TIMEOUT_SECONDS = 60L
+
     fun List<Any>.toCommitMessage(title: String): String {
         return if (this.isEmpty()) {
             ""
@@ -76,7 +80,12 @@ object Utils {
         return Pair(section, branch)
     }
 
-    fun compilePdf(): Pair<Process, Int> {
+    /**
+     * Runs pdflatex on resume.tex. Returns the process and its exit code, or a
+     * null exit code if it didn't finish within [COMPILE_TIMEOUT_SECONDS] (the
+     * process is killed in that case).
+     */
+    fun compilePdf(): Pair<Process, Int?> {
         val nullDevice = File(
             if (System.getProperty("os.name").lowercase().contains("win")) "NUL" else "/dev/null"
         )
@@ -97,8 +106,12 @@ object Utils {
             .redirectOutput(ProcessBuilder.Redirect.to(nullDevice))
             .start()
 
-        val exitCode = process.waitFor()
-        return Pair(process, exitCode)
+        if (!process.waitFor(COMPILE_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
+            process.destroyForcibly()
+            process.waitFor(5, TimeUnit.SECONDS)
+            return Pair(process, null)
+        }
+        return Pair(process, process.exitValue())
     }
 
     inline fun <reified T> MutableList<T>.reorder(reorderBullets: Boolean = true) {
