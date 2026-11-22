@@ -24,11 +24,23 @@ A command-line tool for managing LaTeX resumes with Git branching for role-speci
 curl -fsSL https://raw.githubusercontent.com/Badr-1/rsm/main/install.sh | bash
 ```
 
-This installs the latest release into `~/.local/bin`, adds it to your `PATH`, and sets up shell completion for bash, zsh or fish. Restart your terminal afterwards.
+The installer lists the available releases so you can pick one (press Enter for the latest):
+
+```
+Available rsm releases:
+   1) v2.0.2  (2025-08-20)  [latest]
+   2) v2.0.0  (2025-07-12)
+
+Choose a release [1]:
+```
+
+It installs into `~/.local/bin`, adds it to your `PATH`, and sets up shell completion for bash, zsh or fish. Restart your terminal afterwards.
 
 To pass options, use `bash -s --`:
 
 ```bash
+# latest release, no questions
+curl -fsSL https://raw.githubusercontent.com/Badr-1/rsm/main/install.sh | bash -s -- --latest
 # a specific version
 curl -fsSL https://raw.githubusercontent.com/Badr-1/rsm/main/install.sh | bash -s -- 2.0.2
 # install missing LaTeX packages without asking
@@ -37,7 +49,8 @@ curl -fsSL https://raw.githubusercontent.com/Badr-1/rsm/main/install.sh | bash -
 
 | Option | Description |
 |---|---|
-| `VERSION` | Version to install, e.g. `2.0.2`. Defaults to the latest release. |
+| `VERSION` | Version to install, e.g. `2.0.2`. Without it, you choose from a list of releases. |
+| `--latest` | Install the latest release without showing the list. |
 | `--jar FILE` | Install from a local JAR instead of downloading it. |
 | `-y`, `--yes` | Install missing LaTeX packages without asking (uses `sudo`). |
 | `--skip-deps` | Never install system packages; only warn about missing ones. |
@@ -53,7 +66,13 @@ In PowerShell:
 irm https://raw.githubusercontent.com/Badr-1/rsm/main/install.ps1 | iex
 ```
 
-This installs into `%LOCALAPPDATA%\Programs\rsm` and adds it to your user `PATH`. If LaTeX is missing it offers to install MiKTeX via `winget`. To pass options, download the script and run it, e.g. `.\install.ps1 -Version 2.0.2`, `.\install.ps1 -Yes` or `.\install.ps1 -SkipDeps`. Shell completion isn't available on Windows.
+Like on Linux/macOS, you pick a release from a list. For the latest release without the list:
+
+```powershell
+$env:RSM_VERSION = 'latest'; irm https://raw.githubusercontent.com/Badr-1/rsm/main/install.ps1 | iex
+```
+
+This installs into `%LOCALAPPDATA%\Programs\rsm` and adds it to your user `PATH`. If LaTeX is missing it offers to install MiKTeX via `winget`. To pass options, download the script and run it, e.g. `.\install.ps1 -Latest`, `.\install.ps1 -Version 2.0.2`, `.\install.ps1 -Yes` or `.\install.ps1 -SkipDeps`. Shell completion isn't available on Windows.
 
 ### Uninstall
 
