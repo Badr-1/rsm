@@ -90,6 +90,8 @@ This removes rsm, its completions and the `PATH` entries the installer added. Ja
 
 ### Build from source
 
+Building needs a full JDK 17+ (with `javac`), not just a Java runtime, e.g. `sudo apt install openjdk-21-jdk-headless`. With only a runtime installed, Gradle fails with "does not provide the required capabilities: [JAVA_COMPILER]".
+
 The project depends on a fork of kotlin-inquirer included as a Git submodule, so clone with `--recursive`:
 
 ```bash
