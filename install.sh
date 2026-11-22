@@ -108,18 +108,44 @@ chmod +x "$WRAPPER_SCRIPT"
 
 
 # 5. Add to PATH if not already present
-if [[ ":$PATH:" != *":$INSTALL_DIR:"* ]]; then
-  echo "Adding $INSTALL_DIR to PATH..."
-  if [[ "$SHELL" == *"bash"* ]]; then
-    echo "export PATH=\"\$PATH:$INSTALL_DIR\"" >> "$HOME/.bashrc"
-    source "$HOME/.bashrc"
-  elif [[ "$SHELL" == *"zsh"* ]]; then
-    echo "export PATH=\"\$PATH:$INSTALL_DIR\"" >> "$HOME/.zshrc"
-    source "$HOME/.zshrc"
-  else
-    echo "Please add $INSTALL_DIR to your PATH manually."
-  fi
+# Note: we never `source` the rc file here. This script runs in its own bash
+# process, so sourcing can't change the caller's shell (and zsh/fish syntax
+# would break under bash). The user is told to restart their shell instead.
+PATH_MARKER="# Added by $TOOL_NAME installer"
+RC_FILE=""
+PATH_UPDATED=false
+
+case "$(basename "${SHELL:-}")" in
+  bash)
+    # macOS Terminal opens login shells, which read .bash_profile, not .bashrc
+    if [[ "$OSTYPE" == "darwin"* ]]; then RC_FILE="$HOME/.bash_profile"; else RC_FILE="$HOME/.bashrc"; fi
+    PATH_LINE="export PATH=\"\$PATH:$INSTALL_DIR\""
+    ;;
+  zsh)
+    RC_FILE="${ZDOTDIR:-$HOME}/.zshrc"
+    PATH_LINE="export PATH=\"\$PATH:$INSTALL_DIR\""
+    ;;
+  fish)
+    RC_FILE="$HOME/.config/fish/conf.d/$TOOL_NAME.fish"
+    PATH_LINE="fish_add_path -g \"$INSTALL_DIR\""
+    ;;
+esac
+
+if [[ ":$PATH:" == *":$INSTALL_DIR:"* ]]; then
+  : # already on PATH in this session
+elif [[ -z "$RC_FILE" ]]; then
+  echo "Unrecognized shell '${SHELL:-unknown}'. Add $INSTALL_DIR to your PATH manually."
+elif [[ -f "$RC_FILE" ]] && grep -qF "$INSTALL_DIR" "$RC_FILE"; then
+  # rc file already has it; the current session just hasn't reloaded yet
+  PATH_UPDATED=true
+else
+  echo "Adding $INSTALL_DIR to PATH in $RC_FILE..."
+  mkdir -p "$(dirname "$RC_FILE")"
+  printf '\n%s\n%s\n' "$PATH_MARKER" "$PATH_LINE" >> "$RC_FILE"
+  PATH_UPDATED=true
 fi
 
-
 echo "$TOOL_NAME v$TOOL_VERSION installed successfully"
+if [[ "$PATH_UPDATED" == true ]]; then
+  echo "Restart your terminal (or run: source $RC_FILE) to start using '$TOOL_NAME'."
+fi
