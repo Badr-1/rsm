@@ -8,18 +8,24 @@
   for Java 17+ and the LaTeX packages needed by 'rsm compile'.
 
 .EXAMPLE
-  .\install.ps1                  # latest release
+  .\install.ps1                  # choose from the available releases
+  .\install.ps1 -Latest          # latest release, no questions
   .\install.ps1 -Version 2.0.2
   .\install.ps1 -Jar .\build\libs\rsm-2.0.2.jar   # install a local build
   .\install.ps1 -Yes             # install MiKTeX without asking if LaTeX is missing
   .\install.ps1 -Uninstall
 
-  One-liner (latest release):
+  One-liner (shows the release menu):
   irm https://raw.githubusercontent.com/Badr-1/rsm/main/install.ps1 | iex
+
+  One-liner, latest release without asking (iex can't take parameters, so use
+  the RSM_VERSION environment variable; it also accepts a version like 2.0.2):
+  $env:RSM_VERSION = 'latest'; irm https://raw.githubusercontent.com/Badr-1/rsm/main/install.ps1 | iex
 #>
 [CmdletBinding()]
 param(
     [string]$Version = $env:RSM_VERSION,
+    [switch]$Latest,
     [string]$Jar,
     [switch]$Yes,
     [switch]$SkipDeps,
@@ -88,14 +94,84 @@ if ($Jar) {
     if (-not (Test-Path -PathType Leaf $Jar)) { Fail "JAR file not found: $Jar" }
     $Jar = (Resolve-Path $Jar).Path
 }
+if ($Version -ieq 'latest') {
+    $Version = ''
+    $Latest = $true
+}
+if ($Latest -and -not [string]::IsNullOrWhiteSpace($Version)) { Fail 'use either -Version or -Latest, not both' }
+if ($Latest -and $Jar) { Fail "-Latest can't be combined with -Jar" }
+
+# Installable releases, newest first. Drafts, versions not shaped X.Y.Z and
+# releases without an rsm-<version>.jar asset are skipped.
+function Get-Releases {
+    $all = Invoke-RestMethod -UseBasicParsing -ErrorAction Stop "https://api.github.com/repos/$Repo/releases?per_page=30"
+    foreach ($r in $all) {
+        $v = $r.tag_name -replace '^v', ''
+        if ($r.draft -or $v -notmatch '^\d+\.\d+\.\d+$') { continue }
+        if (-not ($r.assets | Where-Object { $_.name -eq "$ToolName-$v.jar" })) { continue }
+        $date = ''
+        if ($r.published_at) { $date = ([datetime]$r.published_at).ToString('yyyy-MM-dd') }
+        [pscustomobject]@{ Version = $v; PreRelease = [bool]$r.prerelease; Date = $date }
+    }
+}
+
+# Show the releases and return the chosen version. Without an interactive
+# host, returns the latest stable release.
+function Select-Version {
+    Write-Host 'Fetching available releases...'
+    try {
+        $releases = @(Get-Releases)
+    } catch {
+        $releases = @()
+    }
+    if ($releases.Count -eq 0) {
+        Fail "could not fetch releases from GitHub. Pass a version, e.g. .\install.ps1 -Version 2.0.2"
+    }
+    $default = 1
+    $stable = @($releases | Where-Object { -not $_.PreRelease })
+    if ($stable.Count -gt 0) { $default = [array]::IndexOf($releases, $stable[0]) + 1 }
+
+    Write-Host ''
+    Write-Host "Available $ToolName releases:"
+    for ($i = 0; $i -lt $releases.Count; $i++) {
+        $r = $releases[$i]
+        $label = "v$($r.Version)"
+        if ($r.Date) { $label += "  ($($r.Date))" }
+        if ($r.PreRelease) { $label += '  [pre-release]' } elseif ($i + 1 -eq $default) { $label += '  [latest]' }
+        Write-Host ('  {0,2}) {1}' -f ($i + 1), $label)
+    }
+    Write-Host ''
+
+    while ($true) {
+        try {
+            $reply = Read-Host "Choose a release [$default]"
+        } catch {
+            $v = $releases[$default - 1].Version
+            Write-Host "No interactive host to choose a version; installing v$v (use -Version or -Latest to be explicit)."
+            return $v
+        }
+        if ([string]::IsNullOrWhiteSpace($reply)) { $reply = "$default" }
+        $reply = $reply.Trim()
+        $n = 0
+        if ([int]::TryParse($reply, [ref]$n) -and $n -ge 1 -and $n -le $releases.Count) {
+            return $releases[$n - 1].Version
+        }
+        $match = $releases | Where-Object { $_.Version -eq ($reply -replace '^v', '') } | Select-Object -First 1
+        if ($match) { return $match.Version }
+        Write-Host "Invalid choice '$reply'. Enter a number from 1 to $($releases.Count)." -ForegroundColor Yellow
+    }
+}
+
 if ([string]::IsNullOrWhiteSpace($Version) -and $Jar) {
     if ((Split-Path -Leaf $Jar) -match "^$ToolName-(\d+\.\d+\.\d+)\.jar$") {
         $Version = $Matches[1]
     } else {
         Fail "can't tell the version from '$(Split-Path -Leaf $Jar)'. Pass it too, e.g. -Version 2.0.2 -Jar FILE"
     }
+} elseif ([string]::IsNullOrWhiteSpace($Version) -and -not $Latest) {
+    $Version = Select-Version
 } elseif ([string]::IsNullOrWhiteSpace($Version)) {
-    Write-Host 'No version given, looking up the latest release...'
+    Write-Host 'Looking up the latest release...'
     try {
         $release = Invoke-RestMethod -UseBasicParsing -ErrorAction Stop "https://api.github.com/repos/$Repo/releases/latest"
         $Version = $release.tag_name
