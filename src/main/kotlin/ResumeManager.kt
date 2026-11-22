@@ -89,25 +89,22 @@ object ResumeManager {
     }
 
     fun ignoreAux() {
-        if(ignoreFile.exists())
-        {
+        if (ignoreFile.exists()) {
             return
         }
 
         ignoreFile.writeText(
-                """
+            """
             # Ignore generated files
             *
             !.gitignore
             !${configFile.name}
-                """.trimIndent()
-            )
+            """.trimIndent()
+        )
         val git = openGitRepository()
 
         git.add().addFilepattern(".").call()
         git.commit().setMessage("Add ignore Files").call()
-
-        
     }
 
     fun createRoleBranch(roleName: String) {
