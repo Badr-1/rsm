@@ -49,6 +49,42 @@ JAR_NAME="$TOOL_NAME-$TOOL_VERSION.jar"
 
 echo "Installing $TOOL_NAME v$TOOL_VERSION..."
 
+# 0. Check for Java 17+
+REQUIRED_JAVA=17
+java_install_hint() {
+  if [[ "$OS" == "macos" ]]; then
+    echo "  brew install openjdk@$REQUIRED_JAVA" >&2
+  elif command -v apt-get >/dev/null 2>&1; then
+    echo "  sudo apt-get install openjdk-$REQUIRED_JAVA-jre" >&2
+  elif command -v dnf >/dev/null 2>&1; then
+    echo "  sudo dnf install java-$REQUIRED_JAVA-openjdk" >&2
+  elif command -v pacman >/dev/null 2>&1; then
+    echo "  sudo pacman -S jre$REQUIRED_JAVA-openjdk" >&2
+  else
+    echo "  https://adoptium.net/" >&2
+  fi
+}
+
+if ! command -v java >/dev/null 2>&1; then
+  echo "Error: Java $REQUIRED_JAVA or newer is required but 'java' was not found. Install it with:" >&2
+  java_install_hint
+  exit 1
+fi
+# `java -version` prints e.g. 'openjdk version "17.0.9"' or 'java version "1.8.0_392"'
+JAVA_VERSION="$(java -version 2>&1 | sed -n 's/.* version "\([^"]*\)".*/\1/p' | head -n 1)"
+JAVA_MAJOR="${JAVA_VERSION%%.*}"
+if [[ "$JAVA_MAJOR" == "1" ]]; then
+  JAVA_MAJOR="$(echo "$JAVA_VERSION" | cut -d. -f2)"
+fi
+JAVA_MAJOR="${JAVA_MAJOR%%[!0-9]*}" # strip suffixes like "-ea"
+if [[ -z "$JAVA_MAJOR" ]]; then
+  echo "Warning: could not determine Java version; make sure Java $REQUIRED_JAVA+ is installed."
+elif ((JAVA_MAJOR < REQUIRED_JAVA)); then
+  echo "Error: Java $REQUIRED_JAVA or newer is required, found Java $JAVA_VERSION. Install a newer one with:" >&2
+  java_install_hint
+  exit 1
+fi
+
 # 1. Check for pdflatex
 if ! command -v pdflatex >/dev/null 2>&1; then
   echo "pdflatex not found. Installing via TeX distribution..."
